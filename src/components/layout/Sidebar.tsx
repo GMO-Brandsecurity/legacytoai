@@ -11,6 +11,7 @@ import {
   TrendingUp,
   UtensilsCrossed,
   Brain,
+  MessageSquare,
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/suppliers", label: "仕入先", icon: Store },
   { href: "/documents", label: "帳票処理", icon: FileText },
   { href: "/pricing", label: "価格・在庫AI", icon: TrendingUp },
+  { href: "/admin", label: "要望管理", icon: MessageSquare },
 ];
 
 export default function Sidebar() {
