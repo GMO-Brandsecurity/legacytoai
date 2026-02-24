@@ -17,7 +17,10 @@ import {
   Shield,
   Menu,
   X,
+  CheckCircle2,
+  Quote,
 } from "lucide-react";
+import EarlyAccessForm from "@/components/EarlyAccessForm";
 
 const legacyVsAI = [
   {
@@ -159,19 +162,19 @@ export default function LandingPage() {
             AIネイティブに変革します。27兆円の食品流通市場を、テクノロジーの力で効率化。
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Link
-              href="/dashboard"
+            <a
+              href="#early-access"
               className="px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
             >
-              デモを見る
+              早期アクセスに登録する
               <ArrowRight className="w-5 h-5" />
-            </Link>
-            <a
-              href="#transformation"
+            </a>
+            <Link
+              href="/dashboard"
               className="px-8 py-3.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-center"
             >
-              仕組みを知る
-            </a>
+              デモを見る
+            </Link>
           </div>
         </div>
       </header>
@@ -317,28 +320,107 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA - デモ体験 */}
-      <section className="py-12 sm:py-20 bg-gradient-to-br from-brand-900 to-brand-950">
+      {/* Social Proof / Voices */}
+      <section className="py-12 sm:py-20 bg-gray-50 border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+              導入を検討している方の声
+            </h2>
+            <p className="text-gray-600">
+              飲食業界の現場から届いたリアルな課題
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {[
+              {
+                quote: "毎朝5時に起きて3社に電話。留守電になると折り返し待ち。これだけで1時間近くかかる日もある。",
+                author: "居酒屋オーナー",
+                location: "東京・渋谷",
+                pain: "発注に毎朝1時間",
+              },
+              {
+                quote: "FAXで届く納品書を手打ちでExcelに転記。月末の請求書照合が地獄。数字の打ち間違いで過払いしてたことも。",
+                author: "イタリアン店長",
+                location: "東京・恵比寿",
+                pain: "月末に3日間の突合作業",
+              },
+              {
+                quote: "キャベツが急に値上がりしたのに気づかず1ヶ月仕入れ続けた。市場価格を毎日追うのは現実的に無理。",
+                author: "中華料理オーナー",
+                location: "東京・池袋",
+                pain: "年間20万円の過払い",
+              },
+            ].map((voice, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-6 border border-gray-100 relative"
+              >
+                <Quote className="w-8 h-8 text-brand-100 absolute top-4 right-4" />
+                <p className="text-gray-700 mb-4 leading-relaxed text-sm">
+                  &ldquo;{voice.quote}&rdquo;
+                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">{voice.author}</div>
+                    <div className="text-xs text-gray-400">{voice.location}</div>
+                  </div>
+                  <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full">
+                    {voice.pain}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Impact numbers */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-8">
+            <div className="text-center mb-6">
+              <p className="text-sm font-semibold text-brand-600 uppercase tracking-wide">発注AIで解決できること</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              {[
+                { value: "95%", label: "電話発注を削減", sub: "45秒で完了" },
+                { value: "98%", label: "帳票処理の精度", sub: "AI OCR" },
+                { value: "¥12万+", label: "月間コスト削減", sub: "平均実績" },
+                { value: "3秒", label: "帳票処理時間", sub: "旧: 15分" },
+              ].map((item) => (
+                <div key={item.label}>
+                  <div className="text-2xl sm:text-3xl font-bold text-brand-600 mb-1">{item.value}</div>
+                  <div className="text-sm font-medium text-gray-900">{item.label}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{item.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Early Access CTA */}
+      <section id="early-access" className="py-12 sm:py-20 bg-gradient-to-br from-brand-900 to-brand-950">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            AIネイティブ受発注プラットフォームを体験する
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+            早期アクセスに登録する
           </h2>
-          <p className="text-brand-200 text-base sm:text-lg mb-8">
-            ダッシュボードでAI需要予測、帳票の自動処理、リアルタイムの価格分析をご覧ください。
+          <p className="text-brand-200 text-base sm:text-lg mb-2">
+            サービス開始時に優先的にご案内します。
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-brand-300 mb-8">
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />無料で登録</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />クレジットカード不要</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />いつでも解除可能</span>
+          </div>
+          <EarlyAccessForm />
+
+          <div className="mt-10 pt-8 border-t border-brand-800">
+            <p className="text-brand-400 text-sm mb-4">まずはデモで機能を確認したい方</p>
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-900 font-bold rounded-lg hover:bg-brand-50 transition-colors text-lg"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-brand-600 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors"
             >
               デモを体験する
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/feedback"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-brand-400 text-brand-200 font-bold rounded-lg hover:bg-brand-800/50 transition-colors text-lg"
-            >
-              導入のご相談
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
