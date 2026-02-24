@@ -4,7 +4,7 @@ export default function SuppliersLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 bg-gray-50">{children}</main>
+      <main className="flex-1 bg-gray-50 pt-14 lg:pt-0">{children}</main>
     </div>
   );
 }

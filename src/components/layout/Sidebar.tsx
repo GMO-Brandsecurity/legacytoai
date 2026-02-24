@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { clsx } from "clsx";
 import {
   LayoutDashboard,
@@ -12,6 +13,8 @@ import {
   UtensilsCrossed,
   Brain,
   MessageSquare,
+  Menu,
+  X,
 } from "lucide-react";
 
 const navItems = [
@@ -23,13 +26,13 @@ const navItems = [
   { href: "/admin", label: "要望管理", icon: MessageSquare },
 ];
 
-export default function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-brand-950 text-white flex flex-col min-h-screen">
+    <>
       <div className="px-6 py-5 border-b border-brand-800">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3" onClick={onNavigate}>
           <div className="w-9 h-9 bg-brand-500 rounded-lg flex items-center justify-center">
             <UtensilsCrossed className="w-5 h-5 text-white" />
           </div>
@@ -44,6 +47,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={clsx(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 isActive
@@ -75,6 +79,61 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export default function Sidebar() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-brand-950 text-white flex items-center justify-between px-4 py-3 border-b border-brand-800">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
+            <UtensilsCrossed className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-base font-bold">発注AI</span>
+        </Link>
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="p-2 text-brand-300 hover:text-white"
+          aria-label="メニューを開く"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {drawerOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside
+        className={clsx(
+          "lg:hidden fixed top-0 left-0 bottom-0 z-50 w-64 bg-brand-950 text-white flex flex-col transition-transform duration-300",
+          drawerOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <button
+          onClick={() => setDrawerOpen(false)}
+          className="absolute top-4 right-4 p-1 text-brand-400 hover:text-white"
+          aria-label="メニューを閉じる"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <SidebarContent onNavigate={() => setDrawerOpen(false)} />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-64 bg-brand-950 text-white flex-col min-h-screen flex-shrink-0">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

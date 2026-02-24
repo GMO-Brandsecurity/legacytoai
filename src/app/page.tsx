@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Phone,
@@ -14,6 +15,8 @@ import {
   Brain,
   ShoppingCart,
   Shield,
+  Menu,
+  X,
 } from "lucide-react";
 
 const legacyVsAI = [
@@ -75,6 +78,8 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -85,14 +90,15 @@ export default function LandingPage() {
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-brand-300 rounded-full blur-3xl" />
         </div>
 
-        <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+        <nav className="relative z-10 flex items-center justify-between px-4 sm:px-8 py-6 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center">
               <UtensilsCrossed className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold text-white">発注AI</span>
           </div>
-          <div className="flex items-center gap-4">
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-4">
             <Link
               href="/feedback"
               className="px-5 py-2.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-sm"
@@ -106,35 +112,63 @@ export default function LandingPage() {
               ダッシュボードを開く
             </Link>
           </div>
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 text-white"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="メニューを開く"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </nav>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-8 pt-16 pb-24">
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="relative z-20 md:hidden bg-brand-900/95 backdrop-blur-sm border-t border-brand-700 px-4 py-4 space-y-3">
+            <Link
+              href="/dashboard"
+              className="block w-full px-4 py-3 bg-white text-brand-900 font-semibold rounded-lg text-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ダッシュボードを開く
+            </Link>
+            <Link
+              href="/feedback"
+              className="block w-full px-4 py-3 border border-brand-400 text-brand-200 font-semibold rounded-lg text-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ご要望・フィードバック
+            </Link>
+          </div>
+        )}
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 pt-12 sm:pt-16 pb-16 sm:pb-24">
           <div className="flex items-center gap-2 text-brand-300 text-sm font-medium mb-6">
             <Zap className="w-4 h-4" />
             <span>AIネイティブ受発注プラットフォーム</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-white max-w-4xl leading-tight mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white max-w-4xl leading-tight mb-6">
             飲食店の仕入れは、まだ
             <span className="text-brand-300">電話・FAX・Excel</span>
             ですか？
             <br />
             全部、AIに置き換えました。
           </h1>
-          <p className="text-xl text-brand-200 max-w-2xl mb-10">
+          <p className="text-lg sm:text-xl text-brand-200 max-w-2xl mb-10">
             発注AIは、毎朝の電話注文、FAXの帳票やり取り、Excelの価格管理を
             AIネイティブに変革します。27兆円の食品流通市場を、テクノロジーの力で効率化。
           </p>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link
               href="/dashboard"
-              className="px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors flex items-center gap-2"
+              className="px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
             >
               デモを見る
               <ArrowRight className="w-5 h-5" />
             </Link>
             <a
               href="#transformation"
-              className="px-8 py-3.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors"
+              className="px-8 py-3.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-center"
             >
               仕組みを知る
             </a>
@@ -143,8 +177,8 @@ export default function LandingPage() {
       </header>
 
       {/* Industry Stats */}
-      <section className="py-16 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-8">
+      <section className="py-12 sm:py-16 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <p className="text-center text-gray-500 text-sm font-medium uppercase tracking-wide mb-10">
             課題：27兆円の市場が、いまだに1990年代のツールで動いている
           </p>
@@ -167,8 +201,8 @@ export default function LandingPage() {
       </section>
 
       {/* Legacy vs AI Transformation */}
-      <section id="transformation" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-8">
+      <section id="transformation" className="py-12 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               変革の全貌
@@ -233,8 +267,8 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-8">
+      <section className="py-12 sm:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               最初からAIネイティブで設計
@@ -283,37 +317,70 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-brand-900 to-brand-950">
-        <div className="max-w-4xl mx-auto px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+      {/* CTA - デモ体験 */}
+      <section className="py-12 sm:py-20 bg-gradient-to-br from-brand-900 to-brand-950">
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             AIネイティブ受発注プラットフォームを体験する
           </h2>
-          <p className="text-brand-200 text-lg mb-8">
+          <p className="text-brand-200 text-base sm:text-lg mb-8">
             ダッシュボードでAI需要予測、帳票の自動処理、リアルタイムの価格分析をご覧ください。
           </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-brand-900 font-bold rounded-lg hover:bg-brand-50 transition-colors text-lg"
-          >
-            ダッシュボードを開く
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-900 font-bold rounded-lg hover:bg-brand-50 transition-colors text-lg"
+            >
+              デモを体験する
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/feedback"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-brand-400 text-brand-200 font-bold rounded-lg hover:bg-brand-800/50 transition-colors text-lg"
+            >
+              導入のご相談
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-brand-950 text-brand-400 text-sm text-center">
-        <p className="mb-2">
-          発注AI &mdash; 飲食店向けAIネイティブ受発注プラットフォーム。
-          電話・FAX・Excelを置き換える。
-        </p>
-        <Link
-          href="/feedback"
-          className="text-brand-300 hover:text-white transition-colors underline underline-offset-2"
-        >
-          ご要望・フィードバックはこちら
-        </Link>
+      <footer className="py-8 sm:py-12 bg-brand-950 border-t border-brand-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
+                  <UtensilsCrossed className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-bold">発注AI</span>
+              </div>
+              <p className="text-brand-400 text-sm">
+                飲食店向けAIネイティブ受発注プラットフォーム。
+                電話・FAX・Excelを置き換える。
+              </p>
+            </div>
+            <div>
+              <h4 className="text-brand-200 font-semibold text-sm mb-3">プラットフォーム</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/dashboard" className="text-brand-400 hover:text-white transition-colors">ダッシュボード</Link></li>
+                <li><Link href="/orders" className="text-brand-400 hover:text-white transition-colors">発注・AI提案</Link></li>
+                <li><Link href="/pricing" className="text-brand-400 hover:text-white transition-colors">価格・在庫AI</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-brand-200 font-semibold text-sm mb-3">サポート</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/feedback" className="text-brand-400 hover:text-white transition-colors">ご要望・フィードバック</Link></li>
+                <li><Link href="/documents" className="text-brand-400 hover:text-white transition-colors">帳票処理</Link></li>
+                <li><Link href="/suppliers" className="text-brand-400 hover:text-white transition-colors">仕入先管理</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-brand-800 pt-6 text-center text-brand-500 text-xs">
+            &copy; 2025 発注AI. All rights reserved.
+          </div>
+        </div>
       </footer>
     </div>
   );
