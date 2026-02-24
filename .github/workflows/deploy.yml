@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/ai-native-industry-solution-VyT0F"]
   workflow_dispatch:
 
 permissions:
