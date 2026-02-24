@@ -19,8 +19,9 @@ import {
   X,
   CheckCircle2,
   Quote,
+  LogIn,
 } from "lucide-react";
-import EarlyAccessForm from "@/components/EarlyAccessForm";
+import { useAuth } from "@/lib/auth";
 
 const legacyVsAI = [
   {
@@ -82,6 +83,7 @@ const stats = [
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   return (
     <div className="min-h-screen">
@@ -108,12 +110,25 @@ export default function LandingPage() {
             >
               ご要望・フィードバック
             </Link>
-            <Link
-              href="/dashboard"
-              className="px-6 py-2.5 bg-white text-brand-900 font-semibold rounded-lg hover:bg-brand-50 transition-colors"
-            >
-              ダッシュボードを開く
-            </Link>
+            {!loading && user ? (
+              <Link
+                href="/dashboard"
+                className="px-6 py-2.5 bg-white text-brand-900 font-semibold rounded-lg hover:bg-brand-50 transition-colors flex items-center gap-2"
+              >
+                {user.photoURL && (
+                  <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+                )}
+                ダッシュボード
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="px-6 py-2.5 bg-white text-brand-900 font-semibold rounded-lg hover:bg-brand-50 transition-colors flex items-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                ログイン
+              </Link>
+            )}
           </div>
           {/* Mobile hamburger */}
           <button
@@ -128,13 +143,23 @@ export default function LandingPage() {
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="relative z-20 md:hidden bg-brand-900/95 backdrop-blur-sm border-t border-brand-700 px-4 py-4 space-y-3">
-            <Link
-              href="/dashboard"
-              className="block w-full px-4 py-3 bg-white text-brand-900 font-semibold rounded-lg text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              ダッシュボードを開く
-            </Link>
+            {!loading && user ? (
+              <Link
+                href="/dashboard"
+                className="block w-full px-4 py-3 bg-white text-brand-900 font-semibold rounded-lg text-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                ダッシュボード
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="block w-full px-4 py-3 bg-white text-brand-900 font-semibold rounded-lg text-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                ログイン
+              </Link>
+            )}
             <Link
               href="/feedback"
               className="block w-full px-4 py-3 border border-brand-400 text-brand-200 font-semibold rounded-lg text-center"
@@ -162,19 +187,29 @@ export default function LandingPage() {
             AIネイティブに変革します。27兆円の食品流通市場を、テクノロジーの力で効率化。
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            {!loading && user ? (
+              <Link
+                href="/dashboard"
+                className="px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
+              >
+                ダッシュボードを開く
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
+              >
+                無料で始める
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            )}
             <a
-              href="#early-access"
-              className="px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
-            >
-              早期アクセスに登録する
-              <ArrowRight className="w-5 h-5" />
-            </a>
-            <Link
-              href="/dashboard"
+              href="#transformation"
               className="px-8 py-3.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-center"
             >
-              デモを見る
-            </Link>
+              機能を見る
+            </a>
           </div>
         </div>
       </header>
@@ -397,32 +432,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Early Access CTA */}
-      <section id="early-access" className="py-12 sm:py-20 bg-gradient-to-br from-brand-900 to-brand-950">
+      {/* CTA */}
+      <section id="get-started" className="py-12 sm:py-20 bg-gradient-to-br from-brand-900 to-brand-950">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            早期アクセスに登録する
+            今すぐ始めましょう
           </h2>
           <p className="text-brand-200 text-base sm:text-lg mb-2">
-            サービス開始時に優先的にご案内します。
+            Googleアカウントで簡単にログイン。個人情報は当サービスでは保持しません。
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-brand-300 mb-8">
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />無料で登録</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />無料で利用開始</span>
             <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />クレジットカード不要</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />いつでも解除可能</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />個人情報は保持しません</span>
           </div>
-          <EarlyAccessForm />
 
-          <div className="mt-10 pt-8 border-t border-brand-800">
-            <p className="text-brand-400 text-sm mb-4">まずはデモで機能を確認したい方</p>
+          {!loading && user ? (
+            <div>
+              <p className="text-brand-200 mb-4">ログイン済みです</p>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-brand-900 font-bold rounded-lg hover:bg-brand-50 transition-colors"
+              >
+                ダッシュボードを開く
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
+          ) : (
             <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-6 py-3 border border-brand-600 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors"
+              href="/login"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-brand-900 font-bold rounded-lg hover:bg-brand-50 transition-colors"
             >
-              デモを体験する
-              <ArrowRight className="w-4 h-4" />
+              <LogIn className="w-5 h-5" />
+              Googleアカウントで無料登録
             </Link>
-          </div>
+          )}
         </div>
       </section>
 
@@ -460,7 +504,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-brand-800 pt-6 text-center text-brand-500 text-xs">
-            &copy; 2025 発注AI. All rights reserved.
+            &copy; 2025-2026 発注AI. All rights reserved.
           </div>
         </div>
       </footer>

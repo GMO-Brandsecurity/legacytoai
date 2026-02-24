@@ -1,6 +1,8 @@
 "use client";
 
-import { Bell, Search, Zap } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Bell, Search, Zap, LogOut, User } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 interface HeaderProps {
   title: string;
@@ -8,8 +10,22 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
+  const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   return (
-    <header className="bg-white border-b border-gray-200 px-8 py-4">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
@@ -18,7 +34,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
           )}
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -38,8 +54,49 @@ export default function Header({ title, subtitle }: HeaderProps) {
               3
             </span>
           </button>
-          <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-bold text-brand-700">田</span>
+
+          {/* User menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt=""
+                  className="w-9 h-9 rounded-full"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-brand-700" />
+                </div>
+              )}
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-12 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {user?.displayName || "ユーザー"}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    signOut();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  ログアウト
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

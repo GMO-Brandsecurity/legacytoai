@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "発注AI - 飲食店向けAIネイティブ受発注プラットフォーム",
@@ -34,7 +35,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="antialiased min-h-screen">{children}</body>
+      <body className="antialiased min-h-screen">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

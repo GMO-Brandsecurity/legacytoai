@@ -15,7 +15,10 @@ import {
   MessageSquare,
   Menu,
   X,
+  LogOut,
+  User,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
@@ -26,7 +29,7 @@ const navItems = [
   { href: "/admin", label: "要望管理", icon: MessageSquare },
 ];
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate, user, onSignOut }: { onNavigate?: () => void; user?: { displayName: string | null; email: string | null; photoURL: string | null } | null; onSignOut?: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -79,12 +82,49 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
       </div>
+
+      {/* User section */}
+      {user && (
+        <div className="px-4 py-3 border-t border-brand-800">
+          <div className="flex items-center gap-3">
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt=""
+                className="w-8 h-8 rounded-full flex-shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-brand-700 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-brand-300" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-brand-200 truncate">
+                {user.displayName || "ユーザー"}
+              </p>
+              <p className="text-xs text-brand-500 truncate">{user.email}</p>
+            </div>
+            <button
+              onClick={() => {
+                onSignOut?.();
+                onNavigate?.();
+              }}
+              className="p-1.5 text-brand-400 hover:text-white hover:bg-brand-700 rounded-lg transition-colors flex-shrink-0"
+              title="ログアウト"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
 export default function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <>
@@ -127,12 +167,12 @@ export default function Sidebar() {
         >
           <X className="w-5 h-5" />
         </button>
-        <SidebarContent onNavigate={() => setDrawerOpen(false)} />
+        <SidebarContent onNavigate={() => setDrawerOpen(false)} user={user} onSignOut={signOut} />
       </aside>
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-64 bg-brand-950 text-white flex-col min-h-screen flex-shrink-0">
-        <SidebarContent />
+        <SidebarContent user={user} onSignOut={signOut} />
       </aside>
     </>
   );
