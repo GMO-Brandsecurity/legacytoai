@@ -27,6 +27,9 @@ const config: Config = {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "fade-in": "fadeIn 0.5s ease-in-out",
         "slide-up": "slideUp 0.5s ease-out",
+        "float-1": "float1 6s ease-in-out infinite",
+        "float-2": "float2 8s ease-in-out infinite",
+        "float-3": "float3 7s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -36,6 +39,20 @@ const config: Config = {
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        float1: {
+          "0%, 100%": { transform: "translateY(0) translateX(0)" },
+          "33%": { transform: "translateY(-20px) translateX(10px)" },
+          "66%": { transform: "translateY(10px) translateX(-5px)" },
+        },
+        float2: {
+          "0%, 100%": { transform: "translateY(0) translateX(0)" },
+          "50%": { transform: "translateY(-30px) translateX(-15px)" },
+        },
+        float3: {
+          "0%, 100%": { transform: "translateY(0) translateX(0)" },
+          "25%": { transform: "translateY(15px) translateX(10px)" },
+          "75%": { transform: "translateY(-10px) translateX(-20px)" },
         },
       },
     },
