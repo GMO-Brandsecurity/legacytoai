@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import SocialLoginButtons from "@/components/auth/SocialLoginButtons";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -296,6 +297,8 @@ export default function SignupPage() {
               )}
             </button>
           </form>
+
+          <SocialLoginButtons />
 
           <div className="mt-6 text-center">
             <span className="text-sm text-gray-500">

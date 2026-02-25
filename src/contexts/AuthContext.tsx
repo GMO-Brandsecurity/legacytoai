@@ -11,12 +11,15 @@ type User = {
   businessType?: string;
 };
 
+type SocialProvider = "google" | "line";
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isSupabase: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (data: { name: string; email: string; password: string; company?: string; businessType?: string }) => Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }>;
+  loginWithSocial: (provider: SocialProvider) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
 };
@@ -30,6 +33,17 @@ const DEMO_CREDENTIALS = {
   user: { name: "デモユーザー", email: "demo@hacchu.net", company: "デモ居酒屋" },
 };
 const STORAGE_KEY = "hacchu-auth-user";
+
+function extractUserFromMeta(meta: Record<string, unknown> | undefined, email: string): User {
+  // Google provides full_name / name, LINE provides name
+  const name = (meta?.full_name || meta?.name || email.split("@")[0] || "") as string;
+  return {
+    name,
+    email,
+    company: meta?.company as string | undefined,
+    businessType: meta?.businessType as string | undefined,
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -51,34 +65,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const meta = session.user.user_metadata;
-        setUser({
-          name: meta?.name || session.user.email?.split("@")[0] || "",
-          email: session.user.email || "",
-          company: meta?.company,
-          businessType: meta?.businessType,
-        });
+        setUser(extractUserFromMeta(session.user.user_metadata, session.user.email || ""));
       }
       setIsLoading(false);
     });
 
-    // Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes (login, logout, token refresh, OAuth callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        const meta = session.user.user_metadata;
-        setUser({
-          name: meta?.name || session.user.email?.split("@")[0] || "",
-          email: session.user.email || "",
-          company: meta?.company,
-          businessType: meta?.businessType,
-        });
+        setUser(extractUserFromMeta(session.user.user_metadata, session.user.email || ""));
+        // After OAuth redirect, navigate to dashboard
+        if (event === "SIGNED_IN") {
+          router.push("/dashboard");
+        }
       } else {
         setUser(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Login ---
   const login = useCallback(async (email: string, password: string) => {
@@ -114,6 +120,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     }
     return { success: false, error: "メールアドレスまたはパスワードが正しくありません" };
+  }, []);
+
+  // --- Social Login (Google / LINE) ---
+  const loginWithSocial = useCallback(async (provider: SocialProvider) => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { success: false, error: "ソーシャルログインを利用するにはSupabaseの設定が必要です" };
+    }
+
+    const redirectTo = typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`
+      : undefined;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: provider === "line" ? "line" as never : provider,
+      options: { redirectTo },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    // The browser will redirect to the provider — no further action needed here
+    return { success: true };
   }, []);
 
   // --- Signup ---
@@ -187,7 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isSupabase: isSupabaseConfigured, login, signup, logout, resetPassword }}>
+    <AuthContext.Provider value={{ user, isLoading, isSupabase: isSupabaseConfigured, login, signup, loginWithSocial, logout, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
