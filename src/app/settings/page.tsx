@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/layout/Header";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   User,
   Bell,
@@ -51,16 +52,35 @@ function Toggle({
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Profile state
   const [profile, setProfile] = useState({
-    name: "田中 太郎",
-    email: "tanaka@hanamaru.jp",
-    phone: "03-1234-5678",
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: "",
     role: "オーナー",
   });
+
+  // Load profile from API
+  useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.profile) {
+          setProfile((prev) => ({
+            ...prev,
+            name: data.profile.name || prev.name,
+            email: data.profile.email || prev.email,
+            phone: data.profile.phone || prev.phone,
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Notification state
   const [notifications, setNotifications] = useState({
@@ -76,7 +96,7 @@ export default function SettingsPage() {
 
   // Store state
   const [store, setStore] = useState({
-    name: "居酒屋 はなまる",
+    name: user?.company || "居酒屋 はなまる",
     genre: "居酒屋",
     address: "東京都渋谷区道玄坂1-2-3",
     seats: "45",
@@ -93,10 +113,21 @@ export default function SettingsPage() {
     slackWebhook: false,
   });
 
-  const handleSave = () => {
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profile.name, company: store.name }),
+      });
+    } catch {
+      // Ignore errors in demo mode
+    }
+    setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  };
+  }, [profile.name, store.name]);
 
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));

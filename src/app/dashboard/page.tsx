@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import {
   ShoppingCart,
@@ -10,60 +11,64 @@ import {
   Brain,
   AlertTriangle,
   Lightbulb,
-  Phone,
-  Printer,
-  Table,
   ArrowRight,
   Store,
   Package,
 } from "lucide-react";
-import { dashboardStats, aiInsights, orders } from "@/lib/data";
+import {
+  dashboardStats as defaultStats,
+  aiInsights as defaultInsights,
+  orders as defaultOrders,
+} from "@/lib/data";
+import type { Order } from "@/lib/types";
 import Link from "next/link";
 
-const statCards = [
-  {
-    label: "今月の発注数",
-    value: dashboardStats.totalOrders.toString(),
-    icon: ShoppingCart,
-    color: "brand",
-    change: null,
-  },
-  {
-    label: "AI自動発注率",
-    value: `${dashboardStats.aiAutomationRate}%`,
-    icon: Brain,
-    color: "purple",
-    change: "先月比 +4.2%",
-  },
-  {
-    label: "平均発注時間",
-    value: dashboardStats.avgOrderTime,
-    icon: Clock,
-    color: "green",
-    change: "電話では15分だった",
-  },
-  {
-    label: "月間発注額",
-    value: `¥${(dashboardStats.monthlyOrderAmount / 10000).toFixed(0)}万`,
-    icon: TrendingUp,
-    color: "amber",
-    change: null,
-  },
-  {
-    label: "帳票処理数",
-    value: dashboardStats.documentsProcessed.toLocaleString(),
-    icon: FileCheck,
-    color: "cyan",
-    change: `FAX ${dashboardStats.faxesEliminated}件を廃止`,
-  },
-  {
-    label: "今月のコスト削減",
-    value: `¥${(dashboardStats.costSavingsThisMonth / 10000).toFixed(1)}万`,
-    icon: Zap,
-    color: "rose",
-    change: `電話${dashboardStats.phoneCallsReplaced}件を削減`,
-  },
-];
+function buildStatCards(stats: typeof defaultStats) {
+  return [
+    {
+      label: "今月の発注数",
+      value: stats.totalOrders.toString(),
+      icon: ShoppingCart,
+      color: "brand",
+      change: null,
+    },
+    {
+      label: "AI自動発注率",
+      value: `${stats.aiAutomationRate}%`,
+      icon: Brain,
+      color: "purple",
+      change: "先月比 +4.2%",
+    },
+    {
+      label: "平均発注時間",
+      value: stats.avgOrderTime,
+      icon: Clock,
+      color: "green",
+      change: "電話では15分だった",
+    },
+    {
+      label: "月間発注額",
+      value: `¥${(stats.monthlyOrderAmount / 10000).toFixed(0)}万`,
+      icon: TrendingUp,
+      color: "amber",
+      change: null,
+    },
+    {
+      label: "帳票処理数",
+      value: stats.documentsProcessed.toLocaleString(),
+      icon: FileCheck,
+      color: "cyan",
+      change: `FAX ${stats.faxesEliminated}件を廃止`,
+    },
+    {
+      label: "今月のコスト削減",
+      value: `¥${(stats.costSavingsThisMonth / 10000).toFixed(1)}万`,
+      icon: Zap,
+      color: "rose",
+      change: `電話${stats.phoneCallsReplaced}件を削減`,
+    },
+  ];
+}
 
 const colorMap: Record<string, string> = {
   brand: "bg-brand-50 text-brand-600",
@@ -101,6 +106,19 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function DashboardPage() {
+  const [orders, setOrders] = useState<Order[]>(defaultOrders);
+
+  useEffect(() => {
+    fetch("/api/orders")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.orders?.length) setOrders(data.orders);
+      })
+      .catch(() => {});
+  }, []);
+
+  const statCards = buildStatCards(defaultStats);
+
   return (
     <div>
       <Header
@@ -249,7 +267,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="divide-y divide-gray-50">
-              {aiInsights.map((insight) => {
+              {defaultInsights.map((insight) => {
                 const Icon = insightIcons[insight.type] || Zap;
                 return (
                   <div key={insight.id} className="px-6 py-4">

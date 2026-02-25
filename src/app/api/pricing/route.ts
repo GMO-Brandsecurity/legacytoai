@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { products } from "@/lib/data";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { getProducts } from "@/lib/db";
 import { analyzePricing, optimizeInventory } from "@/lib/ai/pricing";
 
 export async function GET() {
+  const supabase = await createSupabaseServer();
+  const products = await getProducts(supabase);
+
   const analyses = products.map((product) => ({
     product,
     priceAnalysis: analyzePricing(product),
@@ -13,6 +17,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createSupabaseServer();
+  const products = await getProducts(supabase);
+
   const body = await request.json();
   const { productId } = body;
 
