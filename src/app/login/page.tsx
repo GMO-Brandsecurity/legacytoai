@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   UtensilsCrossed,
   Mail,
@@ -16,7 +16,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import SocialLoginButtons from "@/components/auth/SocialLoginButtons";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,12 +25,21 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const { login, resetPassword, user, isSupabase } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (user) {
       router.push("/dashboard");
     }
   }, [user, router]);
+
+  // OAuth コールバック失敗時のエラー表示
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError === "auth_callback_failed") {
+      setError("ソーシャルログインに失敗しました。もう一度お試しください。");
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,139 +70,147 @@ export default function LoginPage() {
   };
 
   return (
+    <div className="w-full max-w-md">
+      {/* Logo */}
+      <Link href="/" className="flex items-center gap-3 mb-10">
+        <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
+          <UtensilsCrossed className="w-5 h-5 text-white" />
+        </div>
+        <span className="text-xl font-bold text-gray-900">発注AI</span>
+      </Link>
+
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        おかえりなさい
+      </h1>
+      <p className="text-gray-500 mb-8">
+        アカウントにログインして、AIが最適化した発注を確認しましょう
+      </p>
+
+      {error && (
+        <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {resetSent && (
+        <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-lg text-sm text-green-700">
+          パスワードリセットのメールを送信しました。受信トレイをご確認ください。
+        </div>
+      )}
+
+      <form onSubmit={handleLogin} className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            メールアドレス
+          </label>
+          <div className="relative">
+            <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@restaurant.jp"
+              className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-sm font-medium text-gray-700">
+              パスワード
+            </label>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+            >
+              パスワードを忘れた方
+            </button>
+          </div>
+          <div className="relative">
+            <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full pl-10 pr-12 py-3 text-sm border border-gray-200 rounded-xl focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              ログイン
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </form>
+
+      <SocialLoginButtons />
+
+      <div className="mt-6 text-center">
+        <span className="text-sm text-gray-500">
+          アカウントをお持ちでない方は{" "}
+        </span>
+        <Link
+          href="/signup"
+          className="text-sm font-medium text-brand-600 hover:text-brand-700"
+        >
+          新規登録
+        </Link>
+      </div>
+
+      {/* Demo Credentials - only show when Supabase is not configured */}
+      {!isSupabase && (
+        <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <p className="text-xs font-medium text-gray-500 mb-2">
+            デモアカウント
+          </p>
+          <div className="space-y-1 text-xs text-gray-600">
+            <p>
+              メール:{" "}
+              <span className="font-mono text-gray-800">demo@hacchu.net</span>
+            </p>
+            <p>
+              パスワード:{" "}
+              <span className="font-mono text-gray-800">demo1234</span>
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <div className="min-h-screen flex">
       {/* Left Panel - Login Form */}
       <div className="flex-1 flex items-center justify-center px-8 py-12">
-        <div className="w-full max-w-md">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
-              <UtensilsCrossed className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">発注AI</span>
-          </Link>
-
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            おかえりなさい
-          </h1>
-          <p className="text-gray-500 mb-8">
-            アカウントにログインして、AIが最適化した発注を確認しましょう
-          </p>
-
-          {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
-              {error}
-            </div>
-          )}
-
-          {resetSent && (
-            <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-lg text-sm text-green-700">
-              パスワードリセットのメールを送信しました。受信トレイをご確認ください。
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                メールアドレス
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@restaurant.jp"
-                  className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium text-gray-700">
-                  パスワード
-                </label>
-                <button
-                  type="button"
-                  onClick={handleResetPassword}
-                  className="text-xs text-brand-600 hover:text-brand-700 font-medium"
-                >
-                  パスワードを忘れた方
-                </button>
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-12 py-3 text-sm border border-gray-200 rounded-xl focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  ログイン
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <SocialLoginButtons />
-
-          <div className="mt-6 text-center">
-            <span className="text-sm text-gray-500">
-              アカウントをお持ちでない方は{" "}
-            </span>
-            <Link
-              href="/signup"
-              className="text-sm font-medium text-brand-600 hover:text-brand-700"
-            >
-              新規登録
-            </Link>
-          </div>
-
-          {/* Demo Credentials - only show when Supabase is not configured */}
-          {!isSupabase && (
-            <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-              <p className="text-xs font-medium text-gray-500 mb-2">
-                デモアカウント
-              </p>
-              <div className="space-y-1 text-xs text-gray-600">
-                <p>
-                  メール:{" "}
-                  <span className="font-mono text-gray-800">demo@hacchu.net</span>
-                </p>
-                <p>
-                  パスワード:{" "}
-                  <span className="font-mono text-gray-800">demo1234</span>
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+        <Suspense fallback={null}>
+          <LoginForm />
+        </Suspense>
       </div>
 
       {/* Right Panel - Branding */}

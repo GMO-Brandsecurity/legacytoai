@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const redirectTo = typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}`
+      ? `${window.location.origin}/auth/callback`
       : undefined;
 
     const { error } = await supabase.auth.signInWithOAuth({
