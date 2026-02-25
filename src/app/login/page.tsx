@@ -21,7 +21,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { login, user } = useAuth();
+  const [resetSent, setResetSent] = useState(false);
+  const { login, resetPassword, user, isSupabase } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -41,6 +42,20 @@ export default function LoginPage() {
     } else {
       setError(result.error || "ログインに失敗しました");
       setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError("パスワードリセット用のメールアドレスを入力してください");
+      return;
+    }
+    setError("");
+    const result = await resetPassword(email);
+    if (result.success) {
+      setResetSent(true);
+    } else {
+      setError(result.error || "パスワードリセットに失敗しました");
     }
   };
 
@@ -70,6 +85,12 @@ export default function LoginPage() {
             </div>
           )}
 
+          {resetSent && (
+            <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-lg text-sm text-green-700">
+              パスワードリセットのメールを送信しました。受信トレイをご確認ください。
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -94,6 +115,7 @@ export default function LoginPage() {
                 </label>
                 <button
                   type="button"
+                  onClick={handleResetPassword}
                   className="text-xs text-brand-600 hover:text-brand-700 font-medium"
                 >
                   パスワードを忘れた方
@@ -150,22 +172,24 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <p className="text-xs font-medium text-gray-500 mb-2">
-              デモアカウント
-            </p>
-            <div className="space-y-1 text-xs text-gray-600">
-              <p>
-                メール:{" "}
-                <span className="font-mono text-gray-800">demo@hacchu.net</span>
+          {/* Demo Credentials - only show when Supabase is not configured */}
+          {!isSupabase && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <p className="text-xs font-medium text-gray-500 mb-2">
+                デモアカウント
               </p>
-              <p>
-                パスワード:{" "}
-                <span className="font-mono text-gray-800">demo1234</span>
-              </p>
+              <div className="space-y-1 text-xs text-gray-600">
+                <p>
+                  メール:{" "}
+                  <span className="font-mono text-gray-800">demo@hacchu.net</span>
+                </p>
+                <p>
+                  パスワード:{" "}
+                  <span className="font-mono text-gray-800">demo1234</span>
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

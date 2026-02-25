@@ -30,7 +30,8 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [agreed, setAgreed] = useState(false);
-  const { signup, user } = useAuth();
+  const [confirmationSent, setConfirmationSent] = useState(false);
+  const { signup, user, isSupabase } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -62,7 +63,14 @@ export default function SignupPage() {
     });
 
     if (result.success) {
-      router.push("/dashboard");
+      if (result.needsConfirmation) {
+        // Supabase requires email confirmation
+        setConfirmationSent(true);
+        setIsLoading(false);
+      } else {
+        // Demo mode: go straight to dashboard
+        router.push("/dashboard");
+      }
     } else {
       setError(result.error || "登録に失敗しました");
       setIsLoading(false);
@@ -72,6 +80,38 @@ export default function SignupPage() {
   const updateForm = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  // Email confirmation success screen
+  if (confirmationSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-8">
+        <div className="w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">
+            確認メールを送信しました
+          </h1>
+          <p className="text-gray-500 mb-2">
+            <span className="font-medium text-gray-700">{form.email}</span> に確認メールを送信しました。
+          </p>
+          <p className="text-gray-500 mb-8">
+            メール内のリンクをクリックして、アカウント登録を完了してください。
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors"
+          >
+            ログインページへ
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <p className="mt-6 text-xs text-gray-400">
+            メールが届かない場合は、迷惑メールフォルダをご確認ください。
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
