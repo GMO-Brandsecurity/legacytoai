@@ -1,39 +1,42 @@
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
-import { readFileSync, writeFileSync, readdirSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 
-function loadFonts() {
-  const fontsDir = join(
-    ROOT,
-    "node_modules",
-    "@fontsource",
-    "noto-sans-jp",
-    "files"
-  );
+function loadFont() {
+  // Use system Japanese fonts (TTF format, works reliably with satori)
+  const fontPaths = [
+    "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf", // IPA P Gothic (proportional)
+    "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf",  // IPA Gothic
+    "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf", // fallback
+  ];
 
-  const fontFiles = readdirSync(fontsDir)
-    .filter((f) => f.endsWith("-700-normal.woff"))
-    .map((f) => join(fontsDir, f));
+  for (const p of fontPaths) {
+    if (existsSync(p)) {
+      console.log("  Using system font:", p);
+      return readFileSync(p);
+    }
+  }
 
-  console.log(`  Loading ${fontFiles.length} font subsets...`);
-
-  return fontFiles.map((f) => ({
-    name: "Noto Sans JP",
-    data: readFileSync(f),
-    weight: 700,
-    style: "normal",
-  }));
+  throw new Error("No Japanese TTF font found on system");
 }
 
 async function generateOGImage() {
   console.log("Generating OG image...");
 
-  const fonts = loadFonts();
+  const fontData = loadFont();
+  const fonts = [
+    {
+      name: "Noto Sans JP",
+      data: fontData,
+      weight: 700,
+      style: "normal",
+    },
+  ];
 
   const svg = await satori(
     {
@@ -303,7 +306,7 @@ async function generateOGImage() {
   const outputPath = join(ROOT, "public", "og-image.png");
   writeFileSync(outputPath, pngBuffer);
   console.log(
-    `  OG image saved to ${outputPath} (${(pngBuffer.length / 1024).toFixed(1)} KB)`
+    `✅ OG image saved to ${outputPath} (${(pngBuffer.length / 1024).toFixed(1)} KB)`
   );
 }
 
