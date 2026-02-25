@@ -104,9 +104,15 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/feedback"
+              className="px-4 py-2.5 text-brand-200 font-medium hover:text-white transition-colors text-sm"
+            >
+              ご要望
+            </Link>
+            <Link
+              href="/login"
               className="px-5 py-2.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-sm"
             >
-              ご要望・フィードバック
+              ログイン
             </Link>
             <Link
               href="/dashboard"
@@ -136,8 +142,15 @@ export default function LandingPage() {
               ダッシュボードを開く
             </Link>
             <Link
-              href="/feedback"
+              href="/login"
               className="block w-full px-4 py-3 border border-brand-400 text-brand-200 font-semibold rounded-lg text-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ログイン
+            </Link>
+            <Link
+              href="/feedback"
+              className="block w-full px-4 py-3 text-brand-300 font-medium text-center"
               onClick={() => setMobileMenuOpen(false)}
             >
               ご要望・フィードバック
@@ -448,14 +461,17 @@ export default function LandingPage() {
                 <li><Link href="/dashboard" className="text-brand-400 hover:text-white transition-colors">ダッシュボード</Link></li>
                 <li><Link href="/orders" className="text-brand-400 hover:text-white transition-colors">発注・AI提案</Link></li>
                 <li><Link href="/pricing" className="text-brand-400 hover:text-white transition-colors">価格・在庫AI</Link></li>
+                <li><Link href="/analytics" className="text-brand-400 hover:text-white transition-colors">分析レポート</Link></li>
+                <li><Link href="/exports" className="text-brand-400 hover:text-white transition-colors">エクスポート</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-brand-200 font-semibold text-sm mb-3">サポート</h4>
+              <h4 className="text-brand-200 font-semibold text-sm mb-3">アカウント</h4>
               <ul className="space-y-2 text-sm">
+                <li><Link href="/login" className="text-brand-400 hover:text-white transition-colors">ログイン</Link></li>
+                <li><Link href="/signup" className="text-brand-400 hover:text-white transition-colors">新規登録</Link></li>
+                <li><Link href="/settings" className="text-brand-400 hover:text-white transition-colors">設定</Link></li>
                 <li><Link href="/feedback" className="text-brand-400 hover:text-white transition-colors">ご要望・フィードバック</Link></li>
-                <li><Link href="/documents" className="text-brand-400 hover:text-white transition-colors">帳票処理</Link></li>
-                <li><Link href="/suppliers" className="text-brand-400 hover:text-white transition-colors">仕入先管理</Link></li>
               </ul>
             </div>
           </div>
