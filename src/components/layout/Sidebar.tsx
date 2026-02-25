@@ -15,6 +15,9 @@ import {
   MessageSquare,
   Menu,
   X,
+  BarChart3,
+  Download,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
@@ -23,7 +26,10 @@ const navItems = [
   { href: "/suppliers", label: "仕入先", icon: Store },
   { href: "/documents", label: "帳票処理", icon: FileText },
   { href: "/pricing", label: "価格・在庫AI", icon: TrendingUp },
+  { href: "/analytics", label: "分析レポート", icon: BarChart3 },
+  { href: "/exports", label: "エクスポート", icon: Download },
   { href: "/admin", label: "要望管理", icon: MessageSquare },
+  { href: "/settings", label: "設定", icon: Settings },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
