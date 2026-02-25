@@ -19,8 +19,11 @@ import {
   X,
   CheckCircle2,
   Quote,
+  LogOut,
+  User,
 } from "lucide-react";
 import EarlyAccessForm from "@/components/EarlyAccessForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 const legacyVsAI = [
   {
@@ -82,6 +85,7 @@ const stats = [
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen">
@@ -108,18 +112,38 @@ export default function LandingPage() {
             >
               ご要望
             </Link>
-            <Link
-              href="/login"
-              className="px-5 py-2.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-sm"
-            >
-              ログイン
-            </Link>
-            <Link
-              href="/dashboard"
-              className="px-6 py-2.5 bg-white text-brand-900 font-semibold rounded-lg hover:bg-brand-50 transition-colors"
-            >
-              ダッシュボードを開く
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="px-6 py-2.5 bg-white text-brand-900 font-semibold rounded-lg hover:bg-brand-50 transition-colors"
+                >
+                  ダッシュボードを開く
+                </Link>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2.5 text-brand-300 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+                >
+                  <LogOut className="w-4 h-4" />
+                  ログアウト
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-5 py-2.5 border border-brand-400 text-brand-200 font-semibold rounded-lg hover:bg-brand-800/50 transition-colors text-sm"
+                >
+                  ログイン
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="px-6 py-2.5 bg-white text-brand-900 font-semibold rounded-lg hover:bg-brand-50 transition-colors"
+                >
+                  ダッシュボードを開く
+                </Link>
+              </>
+            )}
           </div>
           {/* Mobile hamburger */}
           <button
@@ -141,13 +165,22 @@ export default function LandingPage() {
             >
               ダッシュボードを開く
             </Link>
-            <Link
-              href="/login"
-              className="block w-full px-4 py-3 border border-brand-400 text-brand-200 font-semibold rounded-lg text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              ログイン
-            </Link>
+            {user ? (
+              <button
+                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                className="block w-full px-4 py-3 border border-brand-400 text-brand-200 font-semibold rounded-lg text-center"
+              >
+                ログアウト
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="block w-full px-4 py-3 border border-brand-400 text-brand-200 font-semibold rounded-lg text-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                ログイン
+              </Link>
+            )}
             <Link
               href="/feedback"
               className="block w-full px-4 py-3 text-brand-300 font-medium text-center"

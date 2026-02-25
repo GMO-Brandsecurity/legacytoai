@@ -18,7 +18,9 @@ import {
   BarChart3,
   Download,
   Settings,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
@@ -34,6 +36,7 @@ const navItems = [
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -69,6 +72,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="px-4 py-4 border-t border-brand-800">
+        {user && (
+          <div className="mb-3 px-3 py-2 rounded-lg bg-brand-900/50">
+            <p className="text-sm font-medium text-brand-200 truncate">{user.name}</p>
+            <p className="text-xs text-brand-400 truncate">{user.email}</p>
+          </div>
+        )}
         <div className="bg-brand-900 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <Brain className="w-4 h-4 text-brand-400" />
@@ -84,6 +93,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             需要予測 &bull; 自動発注 &bull; 帳票処理
           </div>
         </div>
+        {user && (
+          <button
+            onClick={() => { logout(); onNavigate?.(); }}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-brand-300 hover:text-white hover:bg-brand-800 rounded-lg transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            ログアウト
+          </button>
+        )}
       </div>
     </>
   );

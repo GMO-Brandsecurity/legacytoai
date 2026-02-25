@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, "claude/ai-native-industry-solution-VyT0F"]
+    branches: [main, "claude/ai-native-industry-solution-VyT0F", "claude/continue-work-LojRI"]
   workflow_dispatch:
 
 permissions:
@@ -39,6 +39,7 @@ jobs:
           path: ./out
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
