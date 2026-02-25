@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   UtensilsCrossed,
   Mail,
@@ -12,6 +13,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,21 +21,27 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { login, user } = useAuth();
+  const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate login
-    setTimeout(() => {
-      if (email && password) {
-        window.location.href = "/dashboard";
-      } else {
-        setError("メールアドレスとパスワードを入力してください");
-        setIsLoading(false);
-      }
-    }, 1000);
+    const result = await login(email, password);
+    if (result.success) {
+      router.push("/dashboard");
+    } else {
+      setError(result.error || "ログインに失敗しました");
+      setIsLoading(false);
+    }
   };
 
   return (

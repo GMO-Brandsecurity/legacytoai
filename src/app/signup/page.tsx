@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   UtensilsCrossed,
   Mail,
@@ -14,6 +15,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -28,21 +30,21 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const { signup, user } = useAuth();
+  const router = useRouter();
 
-  const handleSignup = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!form.name || !form.email || !form.password) {
-      setError("必須項目を入力してください");
-      return;
-    }
     if (form.password !== form.confirmPassword) {
       setError("パスワードが一致しません");
-      return;
-    }
-    if (form.password.length < 8) {
-      setError("パスワードは8文字以上で入力してください");
       return;
     }
     if (!agreed) {
@@ -51,9 +53,20 @@ export default function SignupPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1200);
+    const result = await signup({
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      company: form.company,
+      businessType: form.businessType,
+    });
+
+    if (result.success) {
+      router.push("/dashboard");
+    } else {
+      setError(result.error || "登録に失敗しました");
+      setIsLoading(false);
+    }
   };
 
   const updateForm = (key: string, value: string) => {
