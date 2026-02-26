@@ -1,14 +1,28 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
+  // Determine the correct origin behind reverse proxy (Vercel, etc.)
+  // request.url may contain an internal origin (e.g. localhost) instead of
+  // the public domain when running behind a proxy.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+  const origin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : new URL(request.url).origin;
+
   if (code) {
     const cookieStore = cookies();
+
+    // Collect cookies that Supabase wants to set so we can attach them
+    // explicitly to the redirect response (cookies().set() alone may not
+    // propagate to NextResponse.redirect() in all Next.js versions).
+    const pendingCookies: { name: string; value: string; options: CookieOptions }[] = [];
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,12 +33,13 @@ export async function GET(request: Request) {
             return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
+            cookiesToSet.forEach((cookie) => pendingCookies.push(cookie));
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               );
             } catch {
-              // Ignore cookie-setting errors in edge cases
+              // Ignore — we set them on the redirect response below
             }
           },
         },
@@ -32,8 +47,14 @@ export async function GET(request: Request) {
     );
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const response = NextResponse.redirect(`${origin}${next}`);
+      // Explicitly attach auth cookies to the redirect response
+      pendingCookies.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, options);
+      });
+      return response;
     }
   }
 
