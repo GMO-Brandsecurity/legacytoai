@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { createSupabaseBrowser, isSupabaseConfigured } from "@/lib/supabase/client";
 
 type User = {
   name: string;
@@ -50,9 +50,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Create SSR-aware browser client (singleton per render tree)
+  const supabase = useMemo(() => {
+    if (!isSupabaseConfigured) return null;
+    return createSupabaseBrowser();
+  }, []);
+
   // --- Supabase session listener ---
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
+    if (!supabase) {
       // Demo mode: hydrate from localStorage
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -84,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [supabase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Login ---
   const login = useCallback(async (email: string, password: string) => {
@@ -92,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "メールアドレスとパスワードを入力してください" };
     }
 
-    if (isSupabaseConfigured && supabase) {
+    if (supabase) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
@@ -120,11 +126,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     }
     return { success: false, error: "メールアドレスまたはパスワードが正しくありません" };
-  }, []);
+  }, [supabase]);
 
   // --- Social Login (Google / LINE) ---
   const loginWithSocial = useCallback(async (provider: SocialProvider) => {
-    if (!isSupabaseConfigured || !supabase) {
+    if (!supabase) {
       return { success: false, error: "ソーシャルログインを利用するにはSupabaseの設定が必要です" };
     }
 
@@ -142,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     // The browser will redirect to the provider — no further action needed here
     return { success: true };
-  }, []);
+  }, [supabase]);
 
   // --- Signup ---
   const signup = useCallback(async (data: { name: string; email: string; password: string; company?: string; businessType?: string }) => {
@@ -153,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "パスワードは8文字以上で入力してください" };
     }
 
-    if (isSupabaseConfigured && supabase) {
+    if (supabase) {
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -185,25 +191,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
     return { success: true };
-  }, []);
+  }, [supabase]);
 
   // --- Logout ---
   const logout = useCallback(async () => {
-    if (isSupabaseConfigured && supabase) {
+    if (supabase) {
       await supabase.auth.signOut();
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
     setUser(null);
     router.push("/");
-  }, [router]);
+  }, [supabase, router]);
 
   // --- Password Reset ---
   const resetPassword = useCallback(async (email: string) => {
     if (!email) {
       return { success: false, error: "メールアドレスを入力してください" };
     }
-    if (isSupabaseConfigured && supabase) {
+    if (supabase) {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) {
         return { success: false, error: error.message };
@@ -212,7 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     // Demo mode: just pretend it worked
     return { success: true };
-  }, []);
+  }, [supabase]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, isSupabase: isSupabaseConfigured, login, signup, loginWithSocial, logout, resetPassword }}>
