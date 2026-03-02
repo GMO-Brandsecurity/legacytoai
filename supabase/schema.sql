@@ -15,18 +15,39 @@ create table if not exists profiles (
 );
 
 -- 新規ユーザー登録時に自動でプロフィールを作成するトリガー
+-- エラーが発生してもユーザー登録自体は妨げない
 create or replace function handle_new_user()
 returns trigger as $$
 begin
   insert into profiles (id, name, email, company, business_type)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
-    new.email,
+    coalesce(
+      nullif(trim(new.raw_user_meta_data->>'name'), ''),
+      nullif(trim(new.raw_user_meta_data->>'full_name'), ''),
+      split_part(new.email, '@', 1)
+    ),
+    coalesce(new.email, ''),
     new.raw_user_meta_data->>'company',
-    new.raw_user_meta_data->>'businessType'
-  );
+    case
+      when new.raw_user_meta_data->>'businessType' in ('restaurant', 'supplier', 'other')
+      then new.raw_user_meta_data->>'businessType'
+      else null
+    end
+  )
+  on conflict (id) do update set
+    name = coalesce(
+      nullif(trim(new.raw_user_meta_data->>'name'), ''),
+      nullif(trim(new.raw_user_meta_data->>'full_name'), ''),
+      excluded.name
+    ),
+    email = coalesce(new.email, excluded.email),
+    updated_at = now();
   return new;
+exception
+  when others then
+    raise log 'handle_new_user failed for %: %', new.id, sqlerrm;
+    return new;
 end;
 $$ language plpgsql security definer;
 
