@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, Search, Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
   title: string;
@@ -8,6 +9,11 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
+  const { user } = useAuth();
+
+  // ユーザー名の先頭1文字をアバターに表示
+  const initial = user?.name?.charAt(0) || "?";
+
   return (
     <header className="bg-white border-b border-gray-200 px-8 py-4">
       <div className="flex items-center justify-between">
@@ -38,8 +44,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
               3
             </span>
           </button>
-          <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-bold text-brand-700">田</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-brand-700">{initial}</span>
+            </div>
+            {user && (
+              <span className="text-sm font-medium text-gray-700 hidden sm:block">{user.name}</span>
+            )}
           </div>
         </div>
       </div>
