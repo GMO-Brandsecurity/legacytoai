@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { products, restaurants } from "@/lib/data";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { getProducts, getRestaurants } from "@/lib/db";
 import { generateDemandForecast } from "@/lib/ai/matching";
 
 export async function POST(request: NextRequest) {
+  const supabase = await createSupabaseServer();
+  const [products, restaurants] = await Promise.all([
+    getProducts(supabase),
+    getRestaurants(supabase),
+  ]);
+
   const body = await request.json();
   const { restaurantId, productId, targetDate } = body;
 
