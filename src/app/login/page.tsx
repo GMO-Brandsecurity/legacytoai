@@ -37,7 +37,11 @@ function LoginForm() {
   useEffect(() => {
     const authError = searchParams.get("error");
     if (authError === "auth_callback_failed") {
-      setError("ソーシャルログインに失敗しました。もう一度お試しください。");
+      const detail = searchParams.get("detail");
+      const message = detail
+        ? `ソーシャルログインに失敗しました: ${detail}`
+        : "ソーシャルログインに失敗しました。もう一度お試しください。";
+      setError(message);
     }
   }, [searchParams]);
 

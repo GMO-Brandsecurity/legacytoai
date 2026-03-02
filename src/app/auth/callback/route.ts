@@ -7,6 +7,10 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
+  // Capture error details that Supabase may include in the redirect
+  const authError = searchParams.get("error");
+  const authErrorDescription = searchParams.get("error_description");
+
   // Determine the correct origin behind reverse proxy (Vercel, etc.)
   // request.url may contain an internal origin (e.g. localhost) instead of
   // the public domain when running behind a proxy.
@@ -15,6 +19,14 @@ export async function GET(request: Request) {
   const origin = forwardedHost
     ? `${forwardedProto}://${forwardedHost}`
     : new URL(request.url).origin;
+
+  // If Supabase returned an error (e.g. provider misconfiguration),
+  // forward the details to the login page for display.
+  if (authError) {
+    console.error("[auth/callback] Supabase OAuth error:", authError, authErrorDescription);
+    const errorParam = encodeURIComponent(authErrorDescription || authError);
+    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed&detail=${errorParam}`);
+  }
 
   if (code) {
     const cookieStore = cookies();
@@ -56,7 +68,12 @@ export async function GET(request: Request) {
       });
       return response;
     }
+
+    console.error("[auth/callback] Code exchange failed:", error.message);
+    const errorParam = encodeURIComponent(error.message);
+    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed&detail=${errorParam}`);
   }
 
+  console.error("[auth/callback] No code or error in callback URL");
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 }
