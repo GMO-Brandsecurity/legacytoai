@@ -445,7 +445,7 @@ export default function SettingsPage() {
                         type="text"
                         value={store.name}
                         onChange={(e) =>
-                          setStore((s: Record<string, string>) => ({ ...s, name: e.target.value }))
+                          setStore((s) => ({ ...s, name: e.target.value }))
                         }
                         className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
@@ -459,7 +459,7 @@ export default function SettingsPage() {
                       <select
                         value={store.genre}
                         onChange={(e) =>
-                          setStore((s: Record<string, string>) => ({ ...s, genre: e.target.value }))
+                          setStore((s) => ({ ...s, genre: e.target.value }))
                         }
                         className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none bg-white"
                       >
@@ -482,7 +482,7 @@ export default function SettingsPage() {
                         type="number"
                         value={store.seats}
                         onChange={(e) =>
-                          setStore((s: Record<string, string>) => ({ ...s, seats: e.target.value }))
+                          setStore((s) => ({ ...s, seats: e.target.value }))
                         }
                         className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
@@ -498,7 +498,7 @@ export default function SettingsPage() {
                         type="text"
                         value={store.address}
                         onChange={(e) =>
-                          setStore((s: Record<string, string>) => ({ ...s, address: e.target.value }))
+                          setStore((s) => ({ ...s, address: e.target.value }))
                         }
                         className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
@@ -515,7 +515,7 @@ export default function SettingsPage() {
                           type="time"
                           value={store.openTime}
                           onChange={(e) =>
-                            setStore((s: Record<string, string>) => ({
+                            setStore((s) => ({
                               ...s,
                               openTime: e.target.value,
                             }))
@@ -534,7 +534,7 @@ export default function SettingsPage() {
                           type="time"
                           value={store.closeTime}
                           onChange={(e) =>
-                            setStore((s: Record<string, string>) => ({
+                            setStore((s) => ({
                               ...s,
                               closeTime: e.target.value,
                             }))
@@ -551,7 +551,7 @@ export default function SettingsPage() {
                         type="text"
                         value={store.closedDays}
                         onChange={(e) =>
-                          setStore((s: Record<string, string>) => ({
+                          setStore((s) => ({
                             ...s,
                             closedDays: e.target.value,
                           }))
@@ -571,7 +571,7 @@ export default function SettingsPage() {
                         type="number"
                         value={store.monthlyBudget}
                         onChange={(e) =>
-                          setStore((s: Record<string, string>) => ({
+                          setStore((s) => ({
                             ...s,
                             monthlyBudget: e.target.value,
                           }))
@@ -589,7 +589,7 @@ export default function SettingsPage() {
                           type="time"
                           value={store.preferredDeliveryTime}
                           onChange={(e) =>
-                            setStore((s: Record<string, string>) => ({
+                            setStore((s) => ({
                               ...s,
                               preferredDeliveryTime: e.target.value,
                             }))
@@ -606,7 +606,7 @@ export default function SettingsPage() {
                     <select
                       value={store.orderMethod}
                       onChange={(e) =>
-                        setStore((s: Record<string, string>) => ({
+                        setStore((s) => ({
                           ...s,
                           orderMethod: e.target.value,
                         }))
