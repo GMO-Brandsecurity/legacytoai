@@ -94,15 +94,26 @@ export default function SettingsPage() {
     lineNotify: false,
   });
 
-  // Store state
-  const [store, setStore] = useState({
-    name: user?.company || "居酒屋 はなまる",
-    genre: "居酒屋",
-    address: "東京都渋谷区道玄坂1-2-3",
-    seats: "45",
-    openTime: "17:00",
-    closeTime: "24:00",
-    closedDays: "日曜日",
+  // Store state - localStorageから復元
+  const [store, setStore] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("hacchu_store_info");
+      if (saved) {
+        try { return JSON.parse(saved); } catch { /* ignore */ }
+      }
+    }
+    return {
+      name: user?.company || "居酒屋 はなまる",
+      genre: "居酒屋",
+      address: "東京都渋谷区道玄坂1-2-3",
+      seats: "45",
+      openTime: "17:00",
+      closeTime: "24:00",
+      closedDays: "日曜日",
+      monthlyBudget: "850000",
+      orderMethod: "ai_auto",
+      preferredDeliveryTime: "08:00",
+    };
   });
 
   // Integration state
@@ -124,10 +135,14 @@ export default function SettingsPage() {
     } catch {
       // Ignore errors in demo mode
     }
+    // Store info をlocalStorageに保存
+    if (typeof window !== "undefined") {
+      localStorage.setItem("hacchu_store_info", JSON.stringify(store));
+    }
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  }, [profile.name, store.name]);
+  }, [profile.name, store]);
 
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -400,7 +415,7 @@ export default function SettingsPage() {
                         type="text"
                         value={store.name}
                         onChange={(e) =>
-                          setStore((s) => ({ ...s, name: e.target.value }))
+                          setStore((s: Record<string, string>) => ({ ...s, name: e.target.value }))
                         }
                         className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
@@ -414,7 +429,7 @@ export default function SettingsPage() {
                       <select
                         value={store.genre}
                         onChange={(e) =>
-                          setStore((s) => ({ ...s, genre: e.target.value }))
+                          setStore((s: Record<string, string>) => ({ ...s, genre: e.target.value }))
                         }
                         className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none bg-white"
                       >
@@ -437,7 +452,7 @@ export default function SettingsPage() {
                         type="number"
                         value={store.seats}
                         onChange={(e) =>
-                          setStore((s) => ({ ...s, seats: e.target.value }))
+                          setStore((s: Record<string, string>) => ({ ...s, seats: e.target.value }))
                         }
                         className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
@@ -453,7 +468,7 @@ export default function SettingsPage() {
                         type="text"
                         value={store.address}
                         onChange={(e) =>
-                          setStore((s) => ({ ...s, address: e.target.value }))
+                          setStore((s: Record<string, string>) => ({ ...s, address: e.target.value }))
                         }
                         className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
@@ -470,7 +485,7 @@ export default function SettingsPage() {
                           type="time"
                           value={store.openTime}
                           onChange={(e) =>
-                            setStore((s) => ({
+                            setStore((s: Record<string, string>) => ({
                               ...s,
                               openTime: e.target.value,
                             }))
@@ -489,7 +504,7 @@ export default function SettingsPage() {
                           type="time"
                           value={store.closeTime}
                           onChange={(e) =>
-                            setStore((s) => ({
+                            setStore((s: Record<string, string>) => ({
                               ...s,
                               closeTime: e.target.value,
                             }))
@@ -506,7 +521,7 @@ export default function SettingsPage() {
                         type="text"
                         value={store.closedDays}
                         onChange={(e) =>
-                          setStore((s) => ({
+                          setStore((s: Record<string, string>) => ({
                             ...s,
                             closedDays: e.target.value,
                           }))
@@ -514,6 +529,64 @@ export default function SettingsPage() {
                         className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
                       />
                     </div>
+                  </div>
+
+                  {/* 追加フィールド */}
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        月間仕入予算（円）
+                      </label>
+                      <input
+                        type="number"
+                        value={store.monthlyBudget}
+                        onChange={(e) =>
+                          setStore((s: Record<string, string>) => ({
+                            ...s,
+                            monthlyBudget: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        希望納品時間
+                      </label>
+                      <div className="relative">
+                        <Clock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="time"
+                          value={store.preferredDeliveryTime}
+                          onChange={(e) =>
+                            setStore((s: Record<string, string>) => ({
+                              ...s,
+                              preferredDeliveryTime: e.target.value,
+                            }))
+                          }
+                          className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      発注方式
+                    </label>
+                    <select
+                      value={store.orderMethod}
+                      onChange={(e) =>
+                        setStore((s: Record<string, string>) => ({
+                          ...s,
+                          orderMethod: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-1 focus:ring-brand-300 outline-none bg-white"
+                    >
+                      <option value="ai_auto">AI全自動（提案→自動確定）</option>
+                      <option value="ai_suggest">AI提案（承認が必要）</option>
+                      <option value="manual">手動発注のみ</option>
+                    </select>
                   </div>
                 </div>
 
