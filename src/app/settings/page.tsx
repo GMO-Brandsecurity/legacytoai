@@ -94,27 +94,43 @@ export default function SettingsPage() {
     lineNotify: false,
   });
 
-  // Store state - localStorageから復元
-  const [store, setStore] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("hacchu_store_info");
-      if (saved) {
-        try { return JSON.parse(saved); } catch { /* ignore */ }
-      }
-    }
-    return {
-      name: user?.company || "居酒屋 はなまる",
-      genre: "居酒屋",
-      address: "東京都渋谷区道玄坂1-2-3",
-      seats: "45",
-      openTime: "17:00",
-      closeTime: "24:00",
-      closedDays: "日曜日",
-      monthlyBudget: "850000",
-      orderMethod: "ai_auto",
-      preferredDeliveryTime: "08:00",
-    };
+  // Store state
+  const [store, setStore] = useState({
+    name: user?.company || "",
+    genre: "居酒屋",
+    address: "",
+    seats: "",
+    openTime: "",
+    closeTime: "",
+    closedDays: "",
+    monthlyBudget: "",
+    orderMethod: "ai_suggest",
+    preferredDeliveryTime: "",
   });
+
+  // Load store info from API
+  useEffect(() => {
+    fetch("/api/restaurants")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.restaurant) {
+          const r = data.restaurant;
+          setStore({
+            name: r.name || "",
+            genre: r.genre || "居酒屋",
+            address: r.area || "",
+            seats: r.seats ? String(r.seats) : "",
+            openTime: r.open_time || "",
+            closeTime: r.close_time || "",
+            closedDays: r.closed_days || "",
+            monthlyBudget: r.monthly_budget ? String(r.monthly_budget) : "",
+            orderMethod: r.order_method || "ai_suggest",
+            preferredDeliveryTime: r.preferred_delivery_time || "",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Integration state
   const [integrations, setIntegrations] = useState({
@@ -127,17 +143,31 @@ export default function SettingsPage() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      // Save profile
       await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: profile.name, company: store.name }),
       });
+      // Save store info to DB
+      await fetch("/api/restaurants", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: store.name,
+          genre: store.genre,
+          address: store.address,
+          seats: store.seats,
+          open_time: store.openTime,
+          close_time: store.closeTime,
+          closed_days: store.closedDays,
+          monthly_budget: store.monthlyBudget,
+          order_method: store.orderMethod,
+          preferred_delivery_time: store.preferredDeliveryTime,
+        }),
+      });
     } catch {
       // Ignore errors in demo mode
-    }
-    // Store info をlocalStorageに保存
-    if (typeof window !== "undefined") {
-      localStorage.setItem("hacchu_store_info", JSON.stringify(store));
     }
     setSaving(false);
     setSaved(true);
