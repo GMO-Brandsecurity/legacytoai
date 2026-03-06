@@ -80,9 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(extractUserFromMeta(session.user.user_metadata, session.user.email || ""));
-        // After OAuth redirect, navigate to dashboard
+        // After OAuth redirect, navigate to dashboard (only from auth pages)
         if (event === "SIGNED_IN") {
-          router.push("/dashboard");
+          const path = window.location.pathname;
+          if (path === "/login" || path === "/signup" || path.startsWith("/auth/")) {
+            router.push("/dashboard");
+          }
         }
       } else {
         setUser(null);
