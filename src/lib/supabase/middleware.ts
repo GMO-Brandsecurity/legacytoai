@@ -57,6 +57,7 @@ export async function updateSession(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
@@ -68,7 +69,9 @@ export async function updateSession(request: NextRequest) {
 
   if (isAuthPage && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    const redirect = request.nextUrl.searchParams.get("redirect");
+    url.pathname = redirect || "/dashboard";
+    url.searchParams.delete("redirect");
     return NextResponse.redirect(url);
   }
 
