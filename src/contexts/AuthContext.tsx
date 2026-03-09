@@ -84,8 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(extractUserFromMeta(session.user.user_metadata, session.user.email || ""));
         // Navigate to dashboard only on fresh sign-in (not token refresh)
         // Skip if the user already had a session (tab refocus / token refresh)
+        // Skip if the user is already on a protected page (page reload scenario)
         if (event === "SIGNED_IN" && !hasInitialSession.current) {
-          router.push("/dashboard");
+          const currentPath = window.location.pathname;
+          const alreadyOnProtectedPage = ["/dashboard", "/orders", "/pricing", "/documents", "/suppliers", "/analytics", "/exports", "/settings", "/admin"].some(p => currentPath.startsWith(p));
+          if (!alreadyOnProtectedPage) {
+            router.push("/dashboard");
+          }
         }
         hasInitialSession.current = true;
       } else {

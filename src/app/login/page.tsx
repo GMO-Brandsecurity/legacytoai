@@ -29,9 +29,10 @@ function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      const redirect = searchParams.get("redirect");
+      router.push(redirect || "/dashboard");
     }
-  }, [user, router]);
+  }, [user, router, searchParams]);
 
   // OAuth コールバック失敗時のエラー表示
   useEffect(() => {
