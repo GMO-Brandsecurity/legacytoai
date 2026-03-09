@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import Header from "@/components/layout/Header";
 import {
   FileText,
@@ -12,12 +12,13 @@ import {
   AlertCircle,
   Upload,
   Zap,
-  FileCheck,
   FileSearch,
+  X,
+  Link2,
 } from "lucide-react";
-import { documents } from "@/lib/data";
+import { documents as initialDocuments, orders } from "@/lib/data";
 import { simulateDocumentProcessing } from "@/lib/ai/documents";
-import type { DocumentRecord } from "@/lib/types";
+import type { DocumentRecord, DocumentType } from "@/lib/types";
 import type { ProcessingResult } from "@/lib/ai/documents";
 
 const typeLabels: Record<string, string> = {
@@ -35,6 +36,49 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
   verified: { label: "検証済み", color: "bg-green-100 text-green-700", icon: CheckCircle },
   error: { label: "エラー", color: "bg-red-100 text-red-700", icon: AlertCircle },
 };
+
+function guessDocumentType(fileName: string): DocumentType {
+  const lower = fileName.toLowerCase();
+  if (lower.includes("納品") || lower.includes("delivery")) return "delivery_note";
+  if (lower.includes("請求") || lower.includes("invoice")) return "invoice";
+  if (lower.includes("注文") || lower.includes("order")) return "order_sheet";
+  if (lower.includes("領収") || lower.includes("receipt")) return "receipt";
+  if (lower.includes("価格") || lower.includes("price")) return "price_list";
+  return "delivery_note";
+}
+
+// --- 照合機能 ---
+function ReconciliationBadge({ doc }: { doc: DocumentRecord }) {
+  if (!doc.orderId) return null;
+  const order = orders.find((o) => o.id === doc.orderId);
+  if (!order) return null;
+
+  // 簡易照合: ドキュメントの合計と注文の合計を比較
+  const extractedTotal = doc.extractedData?.total;
+  const orderTotal = `¥${order.totalAmount.toLocaleString()}`;
+  const match = extractedTotal === orderTotal;
+
+  return (
+    <div className={`mt-2 p-2 rounded-lg flex items-center gap-2 text-xs ${
+      match ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+    }`}>
+      <Link2 className="w-3.5 h-3.5 flex-shrink-0" />
+      <div>
+        <span className="font-medium">発注照合: {doc.orderId}</span>
+        {match ? (
+          <span className="ml-2">金額一致 ({orderTotal})</span>
+        ) : (
+          <span className="ml-2">要確認 — 書類: {extractedTotal || "不明"} / 注文: {orderTotal}</span>
+        )}
+      </div>
+      {match ? (
+        <CheckCircle className="w-3.5 h-3.5 text-green-600 ml-auto flex-shrink-0" />
+      ) : (
+        <AlertCircle className="w-3.5 h-3.5 text-amber-600 ml-auto flex-shrink-0" />
+      )}
+    </div>
+  );
+}
 
 function DocumentCard({ doc }: { doc: DocumentRecord }) {
   const [result, setResult] = useState<ProcessingResult | null>(null);
@@ -108,9 +152,12 @@ function DocumentCard({ doc }: { doc: DocumentRecord }) {
         </div>
       )}
 
+      {/* 照合結果 */}
+      <ReconciliationBadge doc={doc} />
+
       {/* Processing result */}
       {result && (
-        <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-100">
+        <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-100">
           <div className="flex items-center gap-1 mb-1">
             <Zap className="w-3.5 h-3.5 text-green-600" />
             <span className="text-xs font-semibold text-green-700">
@@ -131,7 +178,7 @@ function DocumentCard({ doc }: { doc: DocumentRecord }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+      <div className="flex items-center justify-between pt-2 mt-3 border-t border-gray-50">
         <span className="text-xs text-gray-400">
           {doc.processedAt
             ? `処理: ${new Date(doc.processedAt).toLocaleString("ja-JP")}`
@@ -162,6 +209,62 @@ function DocumentCard({ doc }: { doc: DocumentRecord }) {
 }
 
 export default function DocumentsPage() {
+  const [documentList, setDocumentList] = useState<DocumentRecord[]>([...initialDocuments]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = useCallback((files: FileList) => {
+    Array.from(files).forEach((file) => {
+      const now = new Date();
+      const docType = guessDocumentType(file.name);
+      const newDoc: DocumentRecord = {
+        id: `DOC-${String(now.getTime()).slice(-6)}`,
+        type: docType,
+        fileName: file.name,
+        status: "uploaded",
+        uploadedAt: now.toISOString(),
+      };
+      setDocumentList((prev) => [newDoc, ...prev]);
+    });
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  }, [handleFiles]);
+
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+      e.target.value = "";
+    }
+  }, [handleFiles]);
+
+  const filtered = typeFilter === "all"
+    ? documentList
+    : documentList.filter((d) => d.type === typeFilter);
+
+  // 照合サマリー
+  const reconciled = documentList.filter((d) => d.orderId);
+  const matchCount = reconciled.filter((d) => {
+    const order = orders.find((o) => o.id === d.orderId);
+    return order && d.extractedData?.total === `¥${order.totalAmount.toLocaleString()}`;
+  }).length;
+
   return (
     <div>
       <Header
@@ -197,22 +300,92 @@ export default function DocumentsPage() {
           </div>
         </div>
 
+        {/* 照合サマリー */}
+        {reconciled.length > 0 && (
+          <div className="mb-6 grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+              <div className="text-2xl font-bold text-gray-900">{reconciled.length}</div>
+              <div className="text-xs text-gray-500">照合済みドキュメント</div>
+            </div>
+            <div className="bg-white rounded-xl border border-green-100 p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{matchCount}</div>
+              <div className="text-xs text-gray-500">金額一致</div>
+            </div>
+            <div className="bg-white rounded-xl border border-amber-100 p-4 text-center">
+              <div className="text-2xl font-bold text-amber-600">{reconciled.length - matchCount}</div>
+              <div className="text-xs text-gray-500">要確認</div>
+            </div>
+          </div>
+        )}
+
         {/* Upload Area */}
-        <div className="mb-6 border-2 border-dashed border-brand-200 rounded-xl p-8 text-center bg-brand-50/30 hover:bg-brand-50/50 transition-colors cursor-pointer">
-          <Upload className="w-8 h-8 text-brand-400 mx-auto mb-3" />
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`mb-6 border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
+            isDragging
+              ? "border-brand-500 bg-brand-50"
+              : "border-brand-200 bg-brand-50/30 hover:bg-brand-50/50"
+          }`}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx"
+            onChange={handleFileInput}
+            className="hidden"
+          />
+          <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragging ? "text-brand-600" : "text-brand-400"}`} />
           <p className="text-sm font-medium text-gray-700 mb-1">
-            帳票をドラッグ＆ドロップ、またはクリックしてアップロード
+            {isDragging ? "ここにドロップしてアップロード" : "帳票をドラッグ＆ドロップ、またはクリックしてアップロード"}
           </p>
           <p className="text-xs text-gray-400">
-            注文書、納品書、請求書、価格表を自動認識・処理します
+            PDF, JPG, PNG, CSV, XLSX対応 — 注文書、納品書、請求書、価格表を自動認識
           </p>
+        </div>
+
+        {/* Type Filter */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
+          {[
+            { key: "all", label: "すべて" },
+            { key: "order_sheet", label: "注文書" },
+            { key: "delivery_note", label: "納品書" },
+            { key: "invoice", label: "請求書" },
+            { key: "receipt", label: "領収書" },
+            { key: "price_list", label: "価格表" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTypeFilter(t.key)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                typeFilter === t.key
+                  ? "bg-brand-600 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {/* Document List */}
         <div className="space-y-4">
-          {documents.map((doc) => (
+          {filtered.map((doc) => (
             <DocumentCard key={doc.id} doc={doc} />
           ))}
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-gray-400">
+              <FileText className="w-8 h-8 mx-auto mb-2" />
+              <p>該当するドキュメントがありません</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 text-xs text-gray-400">
+          全 {documentList.length} 件 / 表示中: {filtered.length} 件
         </div>
       </div>
     </div>

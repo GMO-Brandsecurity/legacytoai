@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Header from "@/components/layout/Header";
+import SupplierFormModal from "@/components/suppliers/SupplierFormModal";
 import {
   Star,
   MapPin,
@@ -10,10 +12,13 @@ import {
   Brain,
   ArrowRight,
   CheckCircle,
-  Truck,
   Calendar,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
-import { suppliers } from "@/lib/data";
+import { suppliers as initialSuppliers } from "@/lib/data";
+import type { Supplier } from "@/lib/types";
 
 const categoryLabels: Record<string, string> = {
   vegetables: "野菜", fruits: "果物", meat: "肉類", seafood: "魚介類",
@@ -37,6 +42,24 @@ function ReliabilityBadge({ score }: { score: number }) {
 }
 
 export default function SuppliersPage() {
+  const [supplierList, setSupplierList] = useState<Supplier[]>([...initialSuppliers]);
+  const [modalSupplier, setModalSupplier] = useState<Supplier | null | undefined>(undefined);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const handleSave = (saved: Supplier) => {
+    setSupplierList((prev) => {
+      const idx = prev.findIndex((s) => s.id === saved.id);
+      if (idx >= 0) { const updated = [...prev]; updated[idx] = saved; return updated; }
+      return [...prev, saved];
+    });
+    setModalSupplier(undefined);
+  };
+
+  const handleDelete = (id: string) => {
+    setSupplierList((prev) => prev.filter((s) => s.id !== id));
+    setDeleteConfirm(null);
+  };
+
   return (
     <div>
       <Header
@@ -66,10 +89,33 @@ export default function SuppliersPage() {
           </div>
         </div>
 
+        {/* Add Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setModalSupplier(null)}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            新規仕入先を追加
+          </button>
+        </div>
+
         {/* Supplier Grid */}
         <div className="grid md:grid-cols-2 gap-4">
-          {suppliers.map((supplier) => (
-            <div key={supplier.id} className="bg-white rounded-xl border border-gray-100 p-6">
+          {supplierList.map((supplier) => (
+            <div key={supplier.id} className="bg-white rounded-xl border border-gray-100 p-6 relative group">
+              {/* Edit/Delete */}
+              <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => setModalSupplier(supplier)}
+                  className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title="編集">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => setDeleteConfirm(supplier.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="削除">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">{supplier.name}</h3>
@@ -125,16 +171,12 @@ export default function SuppliersPage() {
                 </div>
                 <div className="flex gap-1.5">
                   {["月", "火", "水", "木", "金", "土", "日"].map((day) => (
-                    <span
-                      key={day}
+                    <span key={day}
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
                         supplier.deliveryDays.includes(day)
                           ? "bg-brand-100 text-brand-700"
                           : "bg-gray-50 text-gray-300"
-                      }`}
-                    >
-                      {day}
-                    </span>
+                      }`}>{day}</span>
                   ))}
                 </div>
               </div>
@@ -158,6 +200,28 @@ export default function SuppliersPage() {
           ))}
         </div>
       </div>
+
+      {/* Supplier Form Modal */}
+      {modalSupplier !== undefined && (
+        <SupplierFormModal supplier={modalSupplier} onSave={handleSave} onClose={() => setModalSupplier(undefined)} />
+      )}
+
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">削除の確認</h3>
+            <p className="text-sm text-gray-600 mb-6">この仕入先を削除しますか？</p>
+            <div className="flex items-center justify-end gap-3">
+              <button onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
+              <button onClick={() => handleDelete(deleteConfirm)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">削除する</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

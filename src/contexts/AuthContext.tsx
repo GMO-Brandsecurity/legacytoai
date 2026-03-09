@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowser, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const hasInitialSession = useRef(false);
 
   // Create SSR-aware browser client (singleton per render tree)
   const supabase = useMemo(() => {
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(extractUserFromMeta(session.user.user_metadata, session.user.email || ""));
+        hasInitialSession.current = true;
       }
       setIsLoading(false);
     });
@@ -80,12 +82,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(extractUserFromMeta(session.user.user_metadata, session.user.email || ""));
-        // After OAuth redirect, navigate to dashboard
-        if (event === "SIGNED_IN") {
+        // Navigate to dashboard only on fresh sign-in (not token refresh)
+        // Skip if the user already had a session (tab refocus / token refresh)
+        if (event === "SIGNED_IN" && !hasInitialSession.current) {
           router.push("/dashboard");
         }
+        hasInitialSession.current = true;
       } else {
         setUser(null);
+        hasInitialSession.current = false;
       }
     });
 

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Header from "@/components/layout/Header";
+import OrderConfirmModal from "@/components/orders/OrderConfirmModal";
+import NewOrderModal from "@/components/orders/NewOrderModal";
 import {
   ShoppingCart,
   Brain,
   ArrowRight,
-  Zap,
   CheckCircle,
   Phone,
   Store,
@@ -15,8 +16,12 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Plus,
+  Send,
+  Edit3,
+  PackageCheck,
 } from "lucide-react";
-import { orders, products, restaurants } from "@/lib/data";
+import { orders as initialOrders, products, restaurants } from "@/lib/data";
 import { generateDemandForecast } from "@/lib/ai/matching";
 import type { Order, DemandForecast } from "@/lib/types";
 
@@ -30,7 +35,22 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   invoiced: { label: "請求済み", color: "bg-purple-100 text-purple-700" },
 };
 
-function OrderCard({ order }: { order: Order }) {
+const nextStatus: Record<string, string> = {
+  ai_suggested: "pending_review",
+  pending_review: "confirmed",
+  confirmed: "processing",
+  delivered: "invoiced",
+};
+
+function OrderCard({
+  order,
+  onStatusChange,
+  onOpenConfirm,
+}: {
+  order: Order;
+  onStatusChange: (id: string, status: string) => void;
+  onOpenConfirm: (order: Order) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [forecasts, setForecasts] = useState<DemandForecast[] | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -147,7 +167,7 @@ function OrderCard({ order }: { order: Order }) {
           </table>
         </div>
 
-        {/* AI Reasons for suggested items */}
+        {/* AI Reasons */}
         {order.items.some((i) => i.aiSuggested && i.aiReason) && (
           <div className="mb-4 space-y-1">
             {order.items
@@ -170,41 +190,87 @@ function OrderCard({ order }: { order: Order }) {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
+        {/* Info + Actions */}
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Clock className="w-3.5 h-3.5" />
             配達予定: {order.deliveryDate}
           </div>
-          {order.aiConfidence && (
+          {order.aiConfidence > 0 && (
             <div className="flex items-center gap-1 text-xs text-brand-600">
               <Brain className="w-3.5 h-3.5" />
               AI信頼度: {order.aiConfidence}%
             </div>
           )}
 
-          <button
-            onClick={handleShowForecasts}
-            disabled={generating}
-            className="ml-auto text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-          >
-            {generating ? (
+          <div className="ml-auto flex items-center gap-2">
+            {/* Action Buttons per status */}
+            {order.status === "ai_suggested" && (
               <>
-                <div className="w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                AI分析中...
-              </>
-            ) : expanded ? (
-              <>
-                <ChevronUp className="w-4 h-4" />
-                閉じる
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4" />
-                AI需要予測を見る
+                <button
+                  onClick={() => onOpenConfirm(order)}
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg flex items-center gap-1 transition-colors"
+                >
+                  <Send className="w-3 h-3" />
+                  承認して発注
+                </button>
+                <button
+                  onClick={() => onOpenConfirm(order)}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-1 transition-colors"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  修正する
+                </button>
               </>
             )}
-          </button>
+            {order.status === "pending_review" && (
+              <button
+                onClick={() => onStatusChange(order.id, "confirmed")}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-1 transition-colors"
+              >
+                <CheckCircle className="w-3 h-3" />
+                確定する
+              </button>
+            )}
+            {order.status === "confirmed" && (
+              <span className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg flex items-center gap-1">
+                <Package className="w-3 h-3" />
+                出荷準備中...
+              </span>
+            )}
+            {order.status === "delivered" && (
+              <button
+                onClick={() => onStatusChange(order.id, "invoiced")}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-1 transition-colors"
+              >
+                <PackageCheck className="w-3 h-3" />
+                納品確認
+              </button>
+            )}
+
+            <button
+              onClick={handleShowForecasts}
+              disabled={generating}
+              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            >
+              {generating ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                  AI分析中...
+                </>
+              ) : expanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4" />
+                  閉じる
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  AI需要予測
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -264,10 +330,35 @@ function OrderCard({ order }: { order: Order }) {
 }
 
 export default function OrdersPage() {
+  const [orderList, setOrderList] = useState<Order[]>([...initialOrders]);
   const [filter, setFilter] = useState<string>("all");
+  const [confirmOrder, setConfirmOrder] = useState<Order | null>(null);
+  const [showNewOrder, setShowNewOrder] = useState(false);
 
   const filteredOrders =
-    filter === "all" ? orders : orders.filter((o) => o.status === filter);
+    filter === "all" ? orderList : orderList.filter((o) => o.status === filter);
+
+  const handleStatusChange = (orderId: string, newStatus: string) => {
+    setOrderList((prev) =>
+      prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Order["status"] } : o)
+    );
+  };
+
+  const handleConfirmOrder = (orderId: string, deliveryDate: string, note: string) => {
+    setOrderList((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? { ...o, status: "confirmed" as Order["status"], deliveryDate, note: note || o.note }
+          : o
+      )
+    );
+    setConfirmOrder(null);
+  };
+
+  const handleNewOrder = (order: Order) => {
+    setOrderList((prev) => [order, ...prev]);
+    setShowNewOrder(false);
+  };
 
   return (
     <div>
@@ -304,35 +395,49 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
-          {[
-            { key: "all", label: "すべて" },
-            { key: "ai_suggested", label: "AI提案" },
-            { key: "pending_review", label: "確認待ち" },
-            { key: "confirmed", label: "確定" },
-            { key: "processing", label: "出荷準備" },
-            { key: "shipped", label: "配送中" },
-            { key: "delivered", label: "納品済み" },
-          ].map((status) => (
-            <button
-              key={status.key}
-              onClick={() => setFilter(status.key)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                filter === status.key
-                  ? "bg-brand-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }`}
-            >
-              {status.label}
-            </button>
-          ))}
+        {/* Filters + New Order */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { key: "all", label: "すべて" },
+              { key: "ai_suggested", label: "AI提案" },
+              { key: "pending_review", label: "確認待ち" },
+              { key: "confirmed", label: "確定" },
+              { key: "processing", label: "出荷準備" },
+              { key: "shipped", label: "配送中" },
+              { key: "delivered", label: "納品済み" },
+            ].map((status) => (
+              <button
+                key={status.key}
+                onClick={() => setFilter(status.key)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  filter === status.key
+                    ? "bg-brand-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                {status.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowNewOrder(true)}
+            className="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            新規発注
+          </button>
         </div>
 
         {/* Order Cards */}
         <div className="space-y-4">
           {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              onStatusChange={handleStatusChange}
+              onOpenConfirm={setConfirmOrder}
+            />
           ))}
           {filteredOrders.length === 0 && (
             <div className="text-center py-12 text-gray-400">
@@ -342,6 +447,21 @@ export default function OrdersPage() {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      {confirmOrder && (
+        <OrderConfirmModal
+          order={confirmOrder}
+          onConfirm={handleConfirmOrder}
+          onClose={() => setConfirmOrder(null)}
+        />
+      )}
+      {showNewOrder && (
+        <NewOrderModal
+          onSubmit={handleNewOrder}
+          onClose={() => setShowNewOrder(false)}
+        />
+      )}
     </div>
   );
 }

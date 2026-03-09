@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Store,
+  Package,
   FileText,
   TrendingUp,
   UtensilsCrossed,
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
   { href: "/orders", label: "発注・AI提案", icon: ShoppingCart },
   { href: "/suppliers", label: "仕入先", icon: Store },
+  { href: "/products", label: "商品マスタ", icon: Package },
   { href: "/documents", label: "帳票処理", icon: FileText },
   { href: "/pricing", label: "価格・在庫AI", icon: TrendingUp },
   { href: "/analytics", label: "分析レポート", icon: BarChart3 },
@@ -41,7 +43,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="px-6 py-5 border-b border-brand-800">
-        <Link href="/" className="flex items-center gap-3" onClick={onNavigate}>
+        <Link href="/dashboard" className="flex items-center gap-3" onClick={onNavigate}>
           <div className="w-9 h-9 bg-brand-500 rounded-lg flex items-center justify-center">
             <UtensilsCrossed className="w-5 h-5 text-white" />
           </div>
@@ -114,7 +116,7 @@ export default function Sidebar() {
     <>
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-brand-950 text-white flex items-center justify-between px-4 py-3 border-b border-brand-800">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
             <UtensilsCrossed className="w-4 h-4 text-white" />
           </div>
