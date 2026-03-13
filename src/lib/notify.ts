@@ -4,7 +4,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const NOTIFY_TO = process.env.NOTIFICATION_EMAIL || "";
+const NOTIFY_TO = process.env.NOTIFICATION_EMAIL || "ryukozu@gmail.com";
 const FROM_ADDRESS = process.env.NOTIFICATION_FROM || "発注AI <noreply@hacchu.net>";
 
 interface EarlyAccessInfo {
