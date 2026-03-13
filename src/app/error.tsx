@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { reportError } from "@/lib/error-reporter";
 
 export default function Error({
   error,
@@ -11,7 +12,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    reportError(error, { context: "ErrorBoundary", metadata: { digest: error.digest } });
   }, [error]);
 
   return (
