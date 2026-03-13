@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { notifyEarlyAccess } from "@/lib/notify";
 
 function getSupabase() {
   const cookieStore = cookies();
@@ -68,9 +69,19 @@ export async function POST(request: NextRequest) {
       .from("early_access")
       .select("*", { count: "exact", head: true });
 
+    const totalCount = (count || 0) + 47; // base count + actual registrations
+
+    // Send notification email (non-blocking, won't affect response)
+    notifyEarlyAccess({
+      email: email.trim().toLowerCase(),
+      businessType,
+      companyName,
+      totalCount,
+    }).catch(() => {});
+
     return NextResponse.json({
       success: true,
-      count: (count || 0) + 47, // base count + actual registrations
+      count: totalCount,
     });
   } catch {
     return NextResponse.json(
