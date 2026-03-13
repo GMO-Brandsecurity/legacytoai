@@ -72,6 +72,75 @@ export async function getOrders(supabase: SupabaseClient | null): Promise<Order[
   }, mockOrders);
 }
 
+// --- Create Order ---
+export async function createOrder(
+  supabase: SupabaseClient | null,
+  userId: string,
+  order: Order
+): Promise<{ success: boolean; error?: string }> {
+  if (!supabase) return { success: false, error: "Database not configured" };
+
+  const { error: orderError } = await supabase.from("orders").insert({
+    id: order.id,
+    user_id: userId,
+    restaurant_id: order.restaurantId,
+    restaurant_name: order.restaurantName,
+    supplier_id: order.supplierId,
+    supplier_name: order.supplierName,
+    total_amount: order.totalAmount,
+    status: order.status,
+    order_date: order.orderDate,
+    delivery_date: order.deliveryDate,
+    ai_confidence: order.aiConfidence,
+    ai_savings: order.aiSavings || 0,
+    note: order.note || null,
+  });
+
+  if (orderError) return { success: false, error: orderError.message };
+
+  if (order.items.length > 0) {
+    const { error: itemsError } = await supabase.from("order_items").insert(
+      order.items.map((item) => ({
+        order_id: order.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        unit: item.unit,
+        unit_price: item.unitPrice,
+        subtotal: item.subtotal,
+        ai_suggested: item.aiSuggested,
+        ai_reason: item.aiReason || null,
+      }))
+    );
+
+    if (itemsError) return { success: false, error: itemsError.message };
+  }
+
+  return { success: true };
+}
+
+// --- Update Order Status ---
+export async function updateOrderStatus(
+  supabase: SupabaseClient | null,
+  orderId: string,
+  status: string,
+  updates?: { delivery_date?: string; note?: string }
+): Promise<{ success: boolean; error?: string }> {
+  if (!supabase) return { success: false, error: "Database not configured" };
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      status,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
 // --- Products ---
 export async function getProducts(supabase: SupabaseClient | null): Promise<Product[]> {
   return withFallback(supabase, async (sb) => {

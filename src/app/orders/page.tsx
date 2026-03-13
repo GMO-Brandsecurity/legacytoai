@@ -342,6 +342,11 @@ export default function OrdersPage() {
     setOrderList((prev) =>
       prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Order["status"] } : o)
     );
+    fetch("/api/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, status: newStatus }),
+    }).catch(() => {});
   };
 
   const handleConfirmOrder = (orderId: string, deliveryDate: string, note: string) => {
@@ -353,6 +358,11 @@ export default function OrdersPage() {
       )
     );
     setConfirmOrder(null);
+    fetch("/api/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, status: "confirmed", deliveryDate, note }),
+    }).catch(() => {});
   };
 
   const handleNewOrder = (order: Order) => {
