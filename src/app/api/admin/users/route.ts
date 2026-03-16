@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isAdminEmail } from "@/lib/supabase/middleware";
 
 function getSupabase() {
   const cookieStore = cookies();
@@ -30,6 +31,15 @@ function getSupabase() {
 export async function GET() {
   try {
     const supabase = getSupabase();
+
+    // Admin authorization check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !isAdminEmail(user.email)) {
+      return NextResponse.json(
+        { error: "権限がありません" },
+        { status: 403 }
+      );
+    }
 
     // Fetch early access registrations
     const { data: earlyAccess, error: earlyError } = await supabase
