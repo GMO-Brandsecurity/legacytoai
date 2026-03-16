@@ -14,6 +14,7 @@ import {
   UtensilsCrossed,
   Brain,
   MessageSquare,
+  Users,
   Menu,
   X,
   BarChart3,
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/analytics", label: "分析レポート", icon: BarChart3 },
   { href: "/exports", label: "エクスポート", icon: Download },
   { href: "/admin", label: "要望管理", icon: MessageSquare },
+  { href: "/admin/users", label: "ユーザー管理", icon: Users },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 
