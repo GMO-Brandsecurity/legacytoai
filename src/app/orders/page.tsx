@@ -20,6 +20,7 @@ import {
   Send,
   Edit3,
   PackageCheck,
+  Truck,
 } from "lucide-react";
 import { orders as initialOrders, products, restaurants } from "@/lib/data";
 import { generateDemandForecast } from "@/lib/ai/matching";
@@ -39,6 +40,8 @@ const nextStatus: Record<string, string> = {
   ai_suggested: "pending_review",
   pending_review: "confirmed",
   confirmed: "processing",
+  processing: "shipped",
+  shipped: "delivered",
   delivered: "invoiced",
 };
 
@@ -233,10 +236,31 @@ function OrderCard({
               </button>
             )}
             {order.status === "confirmed" && (
-              <span className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg flex items-center gap-1">
+              <button
+                onClick={() => onStatusChange(order.id, "processing")}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1 transition-colors"
+              >
                 <Package className="w-3 h-3" />
-                出荷準備中...
-              </span>
+                出荷準備開始
+              </button>
+            )}
+            {order.status === "processing" && (
+              <button
+                onClick={() => onStatusChange(order.id, "shipped")}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-1 transition-colors"
+              >
+                <Truck className="w-3 h-3" />
+                配送開始
+              </button>
+            )}
+            {order.status === "shipped" && (
+              <button
+                onClick={() => onStatusChange(order.id, "delivered")}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg flex items-center gap-1 transition-colors"
+              >
+                <PackageCheck className="w-3 h-3" />
+                納品完了
+              </button>
             )}
             {order.status === "delivered" && (
               <button
