@@ -10,6 +10,19 @@ interface NewOrderModalProps {
   onClose: () => void;
 }
 
+async function persistOrder(order: Order): Promise<boolean> {
+  try {
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 const categoryLabels: Record<string, string> = {
   vegetables: "野菜", fruits: "果物", meat: "肉類", seafood: "魚介類",
   dairy: "乳製品", dry_goods: "乾物・調味料", frozen: "冷凍食品",
@@ -83,10 +96,10 @@ export default function NewOrderModal({ onSubmit, onClose }: NewOrderModalProps)
       createdAt: now.toISOString(),
     };
 
-    setTimeout(() => {
+    persistOrder(order).finally(() => {
       onSubmit(order);
       setSubmitting(false);
-    }, 500);
+    });
   };
 
   return (

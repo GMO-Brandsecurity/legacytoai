@@ -272,6 +272,19 @@ create policy "price_changes_select_own" on price_changes for select
 create policy "ai_insights_select_own" on ai_insights for select using (auth.uid() = user_id);
 create policy "ai_insights_update_own" on ai_insights for update using (auth.uid() = user_id);
 
+-- 早期アクセス登録（認証不要・匿名アクセス可）
+create table if not exists early_access (
+  id uuid default gen_random_uuid() primary key,
+  email text unique not null,
+  business_type text default 'restaurant',
+  company_name text,
+  created_at timestamptz default now()
+);
+
+alter table early_access enable row level security;
+create policy "early_access_insert_anon" on early_access for insert with check (true);
+create policy "early_access_select_anon" on early_access for select using (true);
+
 -- ============================================================
 -- インデックス
 -- ============================================================

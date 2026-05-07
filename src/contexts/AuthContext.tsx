@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowser, isSupabaseConfigured } from "@/lib/supabase/client";
+import { createSupabaseBrowser, isSupabaseConfigured, isDemoModeEnabled } from "@/lib/supabase/client";
 
 type User = {
   name: string;
@@ -60,11 +60,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // --- Supabase session listener ---
   useEffect(() => {
     if (!supabase) {
-      // Demo mode: hydrate from localStorage
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) setUser(JSON.parse(stored));
-      } catch {}
+      // Demo mode: hydrate from localStorage (only if demo mode is enabled)
+      if (isDemoModeEnabled) {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) setUser(JSON.parse(stored));
+        } catch {}
+      }
       setIsLoading(false);
       return;
     }
@@ -122,7 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     }
 
-    // Demo mode fallback
+    // Demo mode fallback (disabled in production)
+    if (!isDemoModeEnabled) {
+      return { success: false, error: "認証サービスが設定されていません" };
+    }
     if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
       const u = DEMO_CREDENTIALS.user;
       setUser(u);
@@ -191,7 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, needsConfirmation: true };
     }
 
-    // Demo mode fallback
+    // Demo mode fallback (disabled in production)
+    if (!isDemoModeEnabled) {
+      return { success: false, error: "認証サービスが設定されていません" };
+    }
     const u: User = {
       name: data.name,
       email: data.email,
@@ -226,8 +234,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { success: true };
     }
-    // Demo mode: just pretend it worked
-    return { success: true };
+    if (isDemoModeEnabled) {
+      return { success: true };
+    }
+    return { success: false, error: "認証サービスが設定されていません" };
   }, [supabase]);
 
   return (

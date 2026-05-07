@@ -5,6 +5,12 @@ import { analyzePricing, optimizeInventory } from "@/lib/ai/pricing";
 
 export async function GET() {
   const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const products = await getProducts(supabase);
 
   const analyses = products.map((product) => ({
@@ -18,6 +24,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const products = await getProducts(supabase);
 
   const body = await request.json();

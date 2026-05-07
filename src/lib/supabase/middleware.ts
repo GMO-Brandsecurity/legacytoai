@@ -1,6 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function getAdminEmails(): string[] {
+  const raw = process.env.ADMIN_EMAILS || "";
+  return raw
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  const admins = getAdminEmails();
+  return admins.includes(email.toLowerCase());
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -58,6 +72,14 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Admin routes: redirect non-admin users to dashboard
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+  if (isAdminRoute && user && !isAdminEmail(user.email)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

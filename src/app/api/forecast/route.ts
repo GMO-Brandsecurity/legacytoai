@@ -5,6 +5,12 @@ import { generateDemandForecast } from "@/lib/ai/matching";
 
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const [products, restaurants] = await Promise.all([
     getProducts(supabase),
     getRestaurants(supabase),
