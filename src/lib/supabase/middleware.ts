@@ -21,8 +21,28 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // If Supabase is not configured, skip auth checks entirely
   if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse;
+  }
+
+  const protectedPaths = [
+    "/dashboard",
+    "/orders",
+    "/pricing",
+    "/documents",
+    "/suppliers",
+    "/analytics",
+    "/exports",
+    "/settings",
+    "/admin",
+  ];
+  const authPaths = ["/login", "/signup"];
+
+  const pathname = request.nextUrl.pathname;
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
+  const isAuthPage = authPaths.some((path) => pathname.startsWith(path));
+
+  if (!isProtected && !isAuthPage) {
     return supabaseResponse;
   }
 
@@ -51,43 +71,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes: redirect to login if not authenticated
-  const protectedPaths = [
-    "/dashboard",
-    "/orders",
-    "/pricing",
-    "/documents",
-    "/suppliers",
-    "/analytics",
-    "/exports",
-    "/settings",
-    "/admin",
-  ];
-
-  const isProtected = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
-
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Admin routes: redirect non-admin users to dashboard
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+  const isAdminRoute = pathname.startsWith("/admin");
   if (isAdminRoute && user && !isAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
-
-  // Redirect logged-in users away from login/signup
-  const authPaths = ["/login", "/signup"];
-  const isAuthPage = authPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
 
   if (isAuthPage && user) {
     const url = request.nextUrl.clone();
